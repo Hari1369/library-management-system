@@ -1,0 +1,290 @@
+/* ============================================
+   Library Management System — library.css
+   Works with Bootstrap 5
+   ============================================ */
+
+/* --- Base --- */
+body {
+  background-color: #f3f5f9;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: #2c2c2a;
+}
+
+/* --- Navbar --- */
+.navbar-lms {
+  background-color: #185FA5;
+  padding: 10px 20px;
+}
+.navbar-lms .navbar-brand {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+.navbar-lms .nav-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-size: 13px;
+}
+.navbar-lms .nav-link:hover {
+  color: #fff !important;
+}
+
+/* --- Sidebar (optional) --- */
+.sidebar {
+  background-color: #fff;
+  border-right: 1px solid #e0e4ea;
+  min-height: 100vh;
+  padding: 20px 0;
+}
+.sidebar .nav-link {
+  color: #444;
+  font-size: 13px;
+  padding: 8px 20px;
+  border-radius: 0;
+}
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+  background-color: #e8f1fb;
+  color: #185FA5;
+  font-weight: 500;
+}
+.sidebar .nav-link i {
+  margin-right: 8px;
+  font-size: 15px;
+}
+
+/* --- Stat Cards --- */
+.stat-card {
+  background: #fff;
+  border: 1px solid #e0e4ea;
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+.stat-card .stat-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+.stat-card .stat-value {
+  font-size: 26px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.stat-card .stat-icon {
+  font-size: 24px;
+  float: right;
+  margin-top: -4px;
+}
+
+/* --- Section header --- */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+/* --- Tables --- */
+.lms-table {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e0e4ea;
+}
+.lms-table thead {
+  background-color: #f0f4fa;
+}
+.lms-table thead th {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e0e4ea;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.lms-table tbody td {
+  padding: 9px 14px;
+  font-size: 13px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f0f2f5;
+  color: #2c2c2a;
+}
+.lms-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.lms-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* --- Badges --- */
+.badge-active {
+  background-color: #EAF3DE;
+  color: #3B6D11;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+.badge-expired {
+  background-color: #FCEBEB;
+  color: #A32D2D;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+.badge-pending {
+  background-color: #FAEEDA;
+  color: #854F0B;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+/* --- Buttons --- */
+.btn-lms-primary {
+  background-color: #185FA5;
+  color: #fff;
+  border: none;
+  padding: 7px 16px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+.btn-lms-primary:hover {
+  background-color: #0C447C;
+  color: #fff;
+}
+.btn-lms-outline {
+  background-color: transparent;
+  color: #185FA5;
+  border: 1px solid #185FA5;
+  padding: 7px 16px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+.btn-lms-outline:hover {
+  background-color: #e8f1fb;
+  color: #185FA5;
+}
+.btn-edit {
+  background-color: #e8f4fd;
+  color: #185FA5;
+  border: 1px solid #B5D4F4;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 5px;
+}
+.btn-edit:hover {
+  background-color: #B5D4F4;
+  color: #0C447C;
+}
+.btn-delete {
+  background-color: #FCEBEB;
+  color: #A32D2D;
+  border: 1px solid #F7C1C1;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 5px;
+}
+.btn-delete:hover {
+  background-color: #F7C1C1;
+  color: #791F1F;
+}
+
+/* --- Cards (generic) --- */
+.lms-card {
+  background: #fff;
+  border: 1px solid #e0e4ea;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+/* --- Forms --- */
+.lms-form-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.lms-form-control {
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 7px 10px;
+  background-color: #fafafa;
+  color: #2c2c2a;
+}
+.lms-form-control:focus {
+  border-color: #185FA5;
+  box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.1);
+  background-color: #fff;
+  outline: none;
+}
+
+/* --- Login page --- */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f4fa;
+}
+.login-card {
+  background: #fff;
+  border: 1px solid #e0e4ea;
+  border-radius: 12px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 360px;
+}
+.login-logo {
+  text-align: center;
+  font-size: 32px;
+  color: #185FA5;
+  margin-bottom: 8px;
+}
+.login-title {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.login-subtitle {
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+/* --- Page wrapper --- */
+.page-wrapper {
+  padding: 20px;
+}
+
+/* --- Search bar --- */
+.search-bar {
+  padding: 7px 12px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #2c2c2a;
+  min-width: 220px;
+}
+.search-bar:focus {
+  border-color: #185FA5;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(24, 95, 165, 0.1);
+}
+
+/* --- Utilities --- */
+.text-muted-sm { font-size: 12px; color: #6b7280; }
+.mt-page { margin-top: 24px; }

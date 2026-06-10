@@ -1,3 +1,101 @@
 from django.db import models
 
-# Create your models here.
+
+class Users(models.Model):
+    username = models.CharField(max_length=255, unique=True)
+    password = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    surname = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=15)
+    address = models.TextField()  
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "user_details"
+
+    def __str__(self):
+        return f"({self.username}) ({self.name}) ({self.surname}) ({self.email}) ({self.phone_number}) ({self.address}) ({self.is_active}) ({self.created_at}) ({self.updated_at})"
+
+
+class BookCategory(models.Model):
+    choice = models.CharField(max_length=100)
+
+    class Meta:
+        db_table = "book_category"
+
+    def __str__(str):
+        return self.choice
+
+
+class BookDetails(models.Model):
+    isbn = models.CharField(max_length=20, unique=True)
+    title = models.CharField(max_length=255)
+    author = models.CharField(max_length=255)
+    category = models.ForeignKey(BookCategory, on_delete=models.CASCADE)
+    publication_year = models.IntegerField()
+    total_copies = models.IntegerField()
+    available_copies = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "book_details"
+
+    def __str__(self):
+        return f"({self.isbn}) ({self.title}) ({self.author}) ({self.category}) ({self.publication_year}) ({self.total_copies}) ({self.available_copies}) ({self.created_at}) ({self.updated_at})"
+
+
+
+class Member(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    book = models.ForeignKey(BookDetails, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=15)
+    address = models.TextField()
+    membership_date = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "member_detail"
+
+    def __str__(self):
+        return  f"{self.name} ({self.email}) ({self.phone_number}) ({self.address}) ({self.member_detail}) ({self.is_active}) ({self.created_at}) ({self.updated_at})"
+
+
+class FineMaintanence(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    book = models.ForeignKey(BookDetails, on_delete=models.CASCADE)
+    fine_cost = models.IntegerField()
+    paid_cost = models.IntegerField()
+    is_paid = is_paid = models.BooleanField(default=False)
+    paid_time = models.DateTimeField(auto_now=True) 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+
+    class Meta:
+        db_table = "fine_maintanence"
+
+
+    def __str__(self):
+        return f"({self.user}) ({self.book}) ({self.fine_cost}) ({self.paid_cost}) ({self.is_paid}) ({self.paid_time}) ({self.created_at}) ({self.updated_at})"
+
+
+class NotificationRecord(models.Model):
+    user = models.ForeignKey(Member, on_delete=models.CASCADE)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.BooleanField(default=False)
+
+
+    class Meta:
+        db_table = "notifications"
+
+    def __str__(self):
+        return f"({self.user}) ({self.message}) ({self.created_at}) ({self.status})"
