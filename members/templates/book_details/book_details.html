@@ -4,7 +4,7 @@
 {% block content %}
 <div class="section-header mb-2">
   <span class="section-title"><i class="bi bi-people me-2"></i>All Books</span>
-  <a href="" class="btn btn-lms-primary btn-sm">
+  <a href="{% url 'book_registration' %}" class="btn btn-lms-primary btn-sm">
     <i class="bi bi-plus-lg me-1"></i>Add Book
   </a>
 </div>
@@ -19,16 +19,28 @@
   <table class="table mb-0">
     <thead>
       <tr>
-        <th>Sr No.</th>
-        <th>Title</th>
-        <th>Author</th>
-        <th>Category</th>
-        <th>Publication Year</th>
-        <th>Total copies</th>
-        <th>Available Copies</th>
+        <th class="text-center">Sr No.</th>
+        <th class="text-center">Title</th>
+        <th class="text-center">Author</th>
+        <th class="text-center">Category</th>
+        <th class="text-center">Publication Year</th>
+        <th class="text-center">Total copies</th>
+        <th class="text-center">Available Copies</th>
       </tr>
     </thead>
-
+  <tbody>
+    {% for book in book_details %}
+    <tr>
+      <td class="text-center">{{ forloop.counter }}</td>
+      <td class="text-center">{{ book.title }}</td>
+      <td class="text-center">{{ book.author }}</td>
+      <td class="text-center">{{ book.category.choice }}</td>
+      <td class="text-center">{{ book.publication_year }}</td>
+      <td class="text-center">{{ book.total_copies }}</td>
+      <td class="text-center">{{ book.available_copies }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
   </table>
 </div>
 

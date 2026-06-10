@@ -1,57 +1,67 @@
 {% extends "base.html" %}
-{% block title %}Add Member — LibraryMS{% endblock %}
+{% block title %}Add Member{% endblock %}
 
 {% block content %}
 <div class="section-header mb-3">
   <span class="section-title"><i class="bi bi-person-plus me-2"></i>Add New Member</span>
   <a href="" class="btn btn-lms-outline btn-sm">← Back to Dashbboard</a>
 </div>
+  {% if success %}
+    <div class="alert alert-success">
+      {{ success }}
+    </div>
+  {% endif %}
 
+  {% if error %}
+    <div class="alert alert-danger">
+      {{ error }}
+    </div>
+  {% endif %}
 <div class="d-flex justify-content-center">
     <div class="lms-card w-100">
         <form method="post">
             {% csrf_token %}
-                <div class="row g-3">
+
+            <div class="row g-3">
+
                 <div class="col-md-6">
-                    <label class="lms-form-label">First name</label>
-                    <input type="text" name="first_name" class="form-control lms-form-control" placeholder="Rahul" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="lms-form-label">Last name</label>
-                    <input type="text" name="last_name" class="form-control lms-form-control" placeholder="Sharma" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="lms-form-label">Email</label>
-                    <input type="email" name="email" class="form-control lms-form-control" placeholder="rahul@email.com" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="lms-form-label">Phone</label>
-                    <input type="text" name="phone" class="form-control lms-form-control" placeholder="+91 98765 43210">
-                </div>
-                <div class="col-md-6">
-                    <label class="lms-form-label">Membership type</label>
-                    <select name="membership_type" class="form-select lms-form-control">
-                    <option value="standard">Standard</option>
-                    <option value="premium">Premium</option>
-                    <option value="student">Student</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="lms-form-label">Join date</label>
-                    <input type="date" name="join_date" class="form-control lms-form-control">
-                </div>
-                <div class="col-12">
-                    <label class="lms-form-label">Address (optional)</label>
-                    <textarea name="address" class="form-control lms-form-control" rows="2" placeholder="Street, City..."></textarea>
-                </div>
+                    <label class="lms-form-label">Name</label>
+                    <input type="text" name="name" class="form-control lms-form-control" required>
                 </div>
 
-                <div class="d-flex gap-2 mt-4">
+                <div class="col-md-6">
+                    <label class="lms-form-label">Email</label>
+                    <input type="email" name="email" class="form-control lms-form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="lms-form-label">Phone Number</label>
+                    <input type="text" name="phone_number" class="form-control lms-form-control">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="lms-form-label">Membership Date</label>
+                    <input type="date" name="membership_date" class="form-control lms-form-control">
+                </div>
+
+                <div class="col-12">
+                    <label class="lms-form-label">Address</label>
+                    <textarea name="address" class="form-control lms-form-control" rows="2"></textarea>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="lms-form-label">Active?</label>
+                    <input type="checkbox" name="is_active">
+                </div>
+
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
                 <button type="submit" class="btn btn-lms-primary">
-                    <i class="bi bi-check-lg me-1"></i>Save member
+                    Save member
                 </button>
                 <a href="" class="btn btn-lms-outline">Cancel</a>
-                </div>
+            </div>
         </form>
     </div>
 <div>

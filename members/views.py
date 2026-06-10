@@ -5,9 +5,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Librarian, Member, BookDetails, BookCategory
 from .serializers import LibrarianSerializers, MemberSerializers
-from .forms import LoginForm, LibrarianFrom, BookCategoryForm, BookForm
+from .forms import LoginForm, LibrarianFrom, BookCategoryForm, BookForm, MemberFrom
 from django.contrib.auth.models import User
 from django.contrib import messages
+from datetime import datetime
 import json
 
 
@@ -24,7 +25,6 @@ def log_in_page(request):
             print("PASSWORD : ", password)
             # ================================>
     return render(request, "log_in/log_in.html", {"form": form})
-
 
 def librarian_registration_page(request):
     form = LibrarianFrom()
@@ -80,12 +80,9 @@ def librarian_registration_page(request):
                         is_active=is_active
                     )
                     return render(request, "librarians_registration/librarians_registration.html", {"form": form, "success": "Librarian inserted successfully!"})
-
             except IntegrityError:
                 return render(request, "librarians_registration/librarians_registration.html", {"form": form,"error": "Database error occurred. Try again."})
-
     return render(request, "librarians_registration/librarians_registration.html", {"form": form})
-
 
 def librarian_details_page(request):
     librarian = Librarian.objects.all()
@@ -126,31 +123,87 @@ def librarian_details_page(request):
             "is_active": user.is_active,
             "created_at": user.created_at,
         })
-
-    return render(request, "librarians_details/librarians_details.html", {"users": user_list})
-
-
+    return render(request, "librarians_details/librarians_details.html", {"users" : user_list})
 
 def member_registration_page(request):
-    # form = MemberFrom()
-    # if request.method == "POST":
-    #     form = MemberFrom(request.POST)
-    #     if form.is_valid():
-    #         name = form.cleaned_data["name"]
-    #         email = form.cleaned_data["email"]
-    #         phone_number = form.cleaned_data["phone_number"]
-    #         address = form.cleaned_data["address"]
-    #         membership_date = form.cleaned_data["membership_date"]
-    #         is_active = form.cleaned_data["name"]
-    #         name = form.cleaned_data["name"]
-    #         name = form.cleaned_data["name"]
+    form = MemberFrom()
+    if request.method == "POST":
+        form = MemberFrom(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data["name"]
+            email = form.cleaned_data["email"]
+            phone_number = form.cleaned_data["phone_number"]
+            address = form.cleaned_data["address"]
+            membership_date = form.cleaned_data["membership_date"]
+            is_active = form.cleaned_data["is_active"]
 
-    return render(request, "member_registration/member_registration.html")
+            # ================================>
+            print("NAME                 : ",  name)
+            print("EMAIL                : ",  email)
+            print("PHONE NUMBER         : ",  phone_number)
+            print("ADDRESS              : ",  address)
+            print("MEMBERSHIP DATE      : ",  membership_date)
+            print("ACTIVE               : ",  is_active)
+            # ================================>
+
+            if Member.objects.filter(name=name).exists():
+                return HttpResponse("Name already exists", status=409)
+            
+            try:
+                with transaction.atomic():
+                    member_insert = Member.objects.create(
+                        name=name,
+                        email=email,
+                        phone_number=phone_number,
+                        address=address,
+                        membership_date=membership_date,
+                        is_active=is_active,
+                    )                 
+                    return render(request, "member_registration/member_registration.html", {"form": form, "success": f"Member {member_insert.name} inserted successfully!"})
+            except IntegrityError:
+                return render(request, "member_registration/member_registration.html", {"form": form,"error": "Database error occurred. Try again."})
+        else:
+            print("something went wrong!")
+            print(form.errors)
+    else:
+        form = MemberFrom()
+    return render(request, "member_registration/member_registration.html", {"form" : form})
 
 def member_details_page(request):
-    return render(request, "member_details/member_details.html")
+    members = Member.objects.all()
+    member_list = []
+    for i in members:
+        id = i.id
+        name = i.name
+        email = i.email
+        phone_number = i.phone_number
+        address = i.address
+        membership_date = i.membership_date.strftime("%d-%m-%Y") if i.membership_date else ""
+        is_active = i.is_active
+        created_at = i.created_at
 
+        # ================================>
+        print("ID               : ", id)
+        print("NAME             : ", name)
+        print("EMAIL            : ", email)
+        print("PHONE NUMBER     : ", phone_number)
+        print("ADDRESS          : ", address)
+        print("MEMBERSHIP DATE  : ", membership_date)
+        print("ACTIVE           : ", is_active)
+        print("CREATED AT       : ", created_at)
+        # ================================>
 
+        member_list.append({
+            "id" : id,
+            "name" : name,
+            "email" : email,
+            "phone_number" : phone_number,
+            "membership_date": membership_date,
+            "is_active" : is_active,
+            "created_at" : created_at,
+        })
+
+    return render(request, "member_details/member_details.html",  {"members": members})
 
 def book_category_registration_page(request):
     form = BookCategoryForm()
@@ -189,8 +242,8 @@ def book_category_registration_page(request):
             BookCategory.objects.create(choice=choice)
             return render(request, "book_category_registration/book_category_registration.html", {"form": form, "category_list": category_list, "success": "Category Added Successfully!"})
         else:
+            print("something went wrong!")
             print(form.errors)
-
     else:
         return render(request, "book_category_registration/book_category_registration.html", {"form": form, "category_list": category_list})
 
@@ -247,10 +300,39 @@ def book_registration_page(request):
                 return render(request, "book_registration/add_books.html", {"form": form,"error": "Database error occurred. Try again."})
     return render(request, "book_registration/add_books.html", {"form": form})
 
-
-
 def book_details_page(request):
-    return render(request, "book_details/book_details.html")
+    book_details = BookDetails.objects.all()
+    book_details_list = []
+
+    for book in book_details:
+        isbn = book.isbn
+        title = book.title
+        author = book.author
+        publication_year = book.publication_year
+        total_copies = book.total_copies
+        available_copies = book.available_copies
+        category_id = book.category.choice
+
+        # ================================>
+        print("ISBN             : ", isbn)
+        print("TITLE            : ", title)
+        print("AUTHOR           : ", author)
+        print("PUBLICATION YEAR : ", publication_year)
+        print("TOTAL COPIES     : ", total_copies)
+        print("AVAILABLE COPIES : ", available_copies)
+        print("CATEGORY         :", category_id)
+        # ================================>
+
+        book_details_list.append({
+            "isbn": book.isbn,
+            "title": book.title,
+            "author": book.author,
+            "publication_year": book.publication_year,
+            "total_copies": book.total_copies,
+            "available_copies": book.available_copies,
+            "category": book.category.choice,
+        })
+    return render(request, "book_details/book_details.html", {"book_details" : book_details_list})
 
 
 

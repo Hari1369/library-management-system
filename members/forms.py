@@ -1,5 +1,5 @@
 from django import forms
-from .models import BookCategory
+from .models import BookCategory, BookDetails
 import datetime
 
 CURRENT_YEAR = datetime.datetime.now().year
@@ -21,13 +21,11 @@ class LibrarianFrom(forms.Form):
     is_active = forms.BooleanField(required=False)
 
 class MemberFrom(forms.Form):
-    username = forms.CharField(max_length=255)
-    password = forms.CharField(widget=forms.PasswordInput)
-    name = forms.CharField(max_length=25)
-    surname = forms.CharField(max_length=25)
-    email = forms.EmailField()
-    phone_number = forms.CharField(max_length=15)
+    name = forms.CharField(max_length=255)
+    email =forms.EmailField()
+    phone_number = forms.CharField(max_length=25)
     address = forms.CharField(widget=forms.Textarea)
+    membership_date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={"type": "datetime-local"}))
     is_active = forms.BooleanField(required=False)
 
 class BookCategoryForm(forms.Form):

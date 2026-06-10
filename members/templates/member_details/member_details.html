@@ -16,22 +16,41 @@
 
 <!-- Table -->
 <div class="lms-table">
-  <table class="table mb-0">
-    <thead>
-      <tr>
-        <th>Sr No.</th>
-        <th>Username</th>
-        <th>Name</th>
-        <th>Surname</th>
-        <th>Email</th>
-        <th>Phone Number</th>
-        <th>Address</th>
-        <th>Active</th>
-        <th>Registered At</th>
-      </tr>
-    </thead>
+<table class="table mb-0">
+  <thead>
+    <tr>
+      <th>Sr No.</th>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Phone Number</th>
+      <th>Address</th>
+      <th>Membership Date</th>
+      <th>Active</th>
+      <th>Registered At</th>
+    </tr>
+  </thead>
 
-  </table>
+  <tbody>
+    {% for member in members %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ member.name }}</td>
+      <td>{{ member.email }}</td>
+      <td>{{ member.phone_number }}</td>
+      <td>{{ member.address }}</td>
+      <td>{{ member.membership_date }}</td>
+      <td>
+        {% if member.is_active %}
+          ✅
+        {% else %}
+          ❌
+        {% endif %}
+      </td>
+      <td>{{ member.created_at }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 </div>
 
 <!-- Pagination -->

@@ -43,13 +43,11 @@ class BookDetails(models.Model):
 
 
 class Member(models.Model):
-    user = models.ForeignKey(Librarian, on_delete=models.CASCADE)
-    book = models.ForeignKey(BookDetails, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15)
     address = models.TextField()
-    membership_date = models.DateTimeField(auto_now_add=True)
+    membership_date = models.DateField()
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -59,19 +57,34 @@ class Member(models.Model):
         return  f"{self.name} ({self.email}) ({self.phone_number}) ({self.address}) ({self.member_detail}) ({self.is_active}) ({self.created_at}) ({self.updated_at})"
 
 
+class IssueMaintanence(models.Model):
+    librarian = models.ForeignKey(Librarian, on_delete=models.CASCADE)
+    book = models.ForeignKey(BookDetails, on_delete=models.CASCADE)
+    issue_date = models.DateTimeField(auto_now=True)
+    due_date = models.DateTimeField(auto_now=True)
+    status = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        db_table = "issue_maintanence"
+        def __str__(self):
+            return f"{({self.librarian}) ({self.book}) ({self.issue_date}) ({self.due_date}) ({self.status}) ({self.created_at}) ({self.updated_at})}"
+
+
 class FineMaintanence(models.Model):
-    user = models.ForeignKey(Librarian, on_delete=models.CASCADE)
+    librarian = models.ForeignKey(Librarian, on_delete=models.CASCADE)
     book = models.ForeignKey(BookDetails, on_delete=models.CASCADE)
     fine_cost = models.IntegerField()
     paid_cost = models.IntegerField()
-    is_paid = is_paid = models.BooleanField(default=False)
+    is_paid = models.BooleanField(default=False)
+    is_return = models.BooleanField(default=False) 
     paid_time = models.DateTimeField(auto_now=True) 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     class Meta:
         db_table = "fine_maintanence"
     def __str__(self):
-        return f"({self.user}) ({self.book}) ({self.fine_cost}) ({self.paid_cost}) ({self.is_paid}) ({self.paid_time}) ({self.created_at}) ({self.updated_at})"
+        return f"({self.librarian}) ({self.book}) ({self.fine_cost}) ({self.paid_cost}) ({self.is_paid}) ({self.paid_time}) ({self.created_at}) ({self.updated_at})"
 
 
 class NotificationRecord(models.Model):
