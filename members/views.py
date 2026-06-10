@@ -88,7 +88,46 @@ def librarian_registration_page(request):
 
 
 def librarian_details_page(request):
-    return render(request, "librarians_details/librarians_details.html")
+    users = Users.objects.all()
+    user_list = []
+    for user in users:
+        id = user.id
+        username = user.username
+        password = user.password
+        name = user.name
+        surname = user.surname
+        email = user.email
+        phone_number = user.phone_number
+        address = user.address
+        is_active = user.is_active
+        created_at = user.created_at
+
+        # ================================>
+        print("ID               : ", id)
+        print("USERNAME         : ", username)
+        print("PASSWORD         : ", password)
+        print("NAME             : ", name)
+        print("SURNAME          : ", surname)
+        print("EMAIL            : ", email)
+        print("PHONE NUMBER     : ", phone_number)
+        print("ADDRESS          : ", address)
+        print("IS ACTIVE        : ", is_active)
+        # ================================>
+
+        user_list.append({
+            "id": user.id,
+            "username": user.username,
+            "password": user.password,
+            "name": user.name,
+            "surname": user.surname,
+            "email": user.email,
+            "phone_number": user.phone_number,
+            "address": user.address,
+            "is_active": user.is_active,
+            "created_at": user.created_at,
+        })
+
+    return render(request, "librarians_details/librarians_details.html", {"users": user_list})
 
 def book_category_registration_page(request):
     return render(request, "book_category_registration/book_category_registration.html")

@@ -3,10 +3,7 @@
 
 {% block content %}
 <div class="section-header mb-2">
-  <span class="section-title"><i class="bi bi-people me-2"></i>All Members</span>
-  <a href="" class="btn btn-lms-primary btn-sm">
-    <i class="bi bi-plus-lg me-1"></i>Add Member
-  </a>
+  <span class="section-title"><i class="bi bi-people me-2"></i>All Librarian Details</span>
 </div>
 
 <!-- Search -->
@@ -19,19 +16,34 @@
   <table class="table mb-0">
     <thead>
       <tr>
-        <th>Sr No.</th>
-        <th>Username</th>
-        <th>password</th>
-        <th>name</th>
-        <th>Surname</th>
-        <th>Email</th>
-        <th>Phone Number</th>
-        <th>Address</th>
-        <th>Active</th>
-        <th>Registered At</th>
+        <th class="text-center">Sr No.</th>
+        <th class="text-center">Username</th>
+        <th class="text-center">password</th>
+        <th class="text-center">name</th>
+        <th class="text-center">Surname</th>
+        <th class="text-center">Email</th>
+        <th class="text-center">Phone Number</th>
+        <th class="text-center">Address</th>
+        <th class="text-center">Active</th>
+        <th class="text-center">Registered At</th>
       </tr>
     </thead>
-
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td class="text-center">{{ forloop.counter }}</td>
+        <td class="text-center">{{ user.username }}</td>
+        <td class="text-center">{{ user.password }}</td>
+        <td class="text-center">{{ user.name }}</td>
+        <td class="text-center">{{ user.surname }}</td>
+        <td class="text-center">{{ user.email }}</td>
+        <td class="text-center">{{ user.phone_number }}</td>
+        <td class="text-center">{{ user.address }}</td>
+        <td class="text-center">{{ user.is_active }}</td>
+        <td class="text-center">{{ user.created_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
   </table>
 </div>
 

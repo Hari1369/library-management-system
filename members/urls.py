@@ -5,7 +5,6 @@ urlpatterns = [
     path("", log_in_page, name="log_in"),
     path("librarian_registration/", librarian_registration_page, name="librarian_registration"),
     path("librarian_details/", librarian_details_page, name="librarian_details"),
-    
 
 
 
