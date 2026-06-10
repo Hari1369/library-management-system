@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Add Librarian {% endblock %}
+
+{% block content %}
+  <div class="section-header mb-3">
+    <span class="section-title">
+      <i class="bi bi-person-plus me-2"></i>Add New Book Category
+    </span>
+    <a href="" class="btn btn-lms-outline btn-sm">← Back to Dashboard</a>
+  </div>
+
+<div class="d-flex justify-content-center">
+  <div class="lms-card w-100">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="row g-3">
+          <div class="col-12 col-md-6 col-lg-6">
+            <label class="lms-form-label">First name</label>
+            <input type="text" name="categories" class="form-control lms-form-control" placeholder="Science Fiction" required>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-lms-primary">
+            <i class="bi bi-check-lg me-1"></i>Save Category
+          </button>
+          <a href="" class="btn btn-lms-outline">Cancel</a>
+        </div>
+
+    </form>
+  </div>
+<div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — LibraryMS{% endblock %}
+
+{% block content %}
+<p class="text-muted-sm mb-3">Overview —</p>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-label">Total Books</div>
+      <div class="stat-value">
+        <i class="bi bi-book stat-icon text-primary"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-label">Members</div>
+      <div class="stat-value">
+        <i class="bi bi-people stat-icon" style="color:#0F6E56"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-label">Issued Today</div>
+      <div class="stat-value">
+        <i class="bi bi-arrow-up-circle stat-icon" style="color:#854F0B"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-label">Overdue</div>
+      <div class="stat-value">
+        <i class="bi bi-exclamation-circle stat-icon" style="color:#A32D2D"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Issues Table -->
+<div class="section-header">
+  <span class="section-title">Recent Issues</span>
+  <a href="" class="btn btn-lms-outline btn-sm">View all</a>
+</div>
+
+<div class="lms-table">
+
+</div>
+{% endblock %}
