@@ -1,10 +1,10 @@
 from rest_framework import serializers
-from .models import Users, Member, BookDetails
+from .models import Librarian, Member, BookDetails
 
 
-class UserSerializers(serializers.ModelSerializer):
+class LibrarianSerializers(serializers.ModelSerializer):
     class Meta:
-        model = Users
+        model = Librarian
         fields = "__all__"
 
 class MemberSerializers(serializers.ModelSerializer):

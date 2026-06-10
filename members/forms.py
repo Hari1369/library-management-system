@@ -5,7 +5,7 @@ class LoginForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput)
 
 
-class UserFrom(forms.Form):
+class LibrarianFrom(forms.Form):
     username = forms.CharField(max_length=255)
     password = forms.CharField(widget=forms.PasswordInput)
     name = forms.CharField(max_length=25)

@@ -3,9 +3,9 @@ from django.http import HttpResponse
 from django.db import transaction, IntegrityError
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Users, Member, BookDetails, BookCategory
-from .serializers import UserSerializers, MemberSerializers
-from .forms import LoginForm, UserFrom
+from .models import Librarian, Member, BookDetails, BookCategory
+from .serializers import LibrarianSerializers, MemberSerializers
+from .forms import LoginForm, LibrarianFrom
 from django.contrib.auth.models import User
 from django.contrib import messages
 import json
@@ -53,7 +53,7 @@ def librarian_registration_page(request):
 
             if User.objects.filter(username=username).exists():
                 return HttpResponse("Username already exists", status=409)
-                if Users.objects.filter(username=username).exists():
+                if Librarian.objects.filter(username=username).exists():
                     return HttpResponse("Username already exists Please do active again", status=409)
 
             try:
@@ -69,7 +69,7 @@ def librarian_registration_page(request):
                         is_superuser=False 
                     )                        
 
-                    Users.objects.create(
+                    Librarian.objects.create(
                         username=username,
                         password=password,
                         name=name,
@@ -88,9 +88,9 @@ def librarian_registration_page(request):
 
 
 def librarian_details_page(request):
-    users = Users.objects.all()
+    librarian = Librarian.objects.all()
     user_list = []
-    for user in users:
+    for user in librarian:
         id = user.id
         username = user.username
         password = user.password

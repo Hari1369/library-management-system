@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class Users(models.Model):
+class Librarian(models.Model):
     username = models.CharField(max_length=255, unique=True)
     password = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
@@ -14,7 +14,7 @@ class Users(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "user_details"
+        db_table = "librarian_details"
 
     def __str__(self):
         return f"({self.username}) ({self.name}) ({self.surname}) ({self.email}) ({self.phone_number}) ({self.address}) ({self.is_active}) ({self.created_at}) ({self.updated_at})"
@@ -50,7 +50,7 @@ class BookDetails(models.Model):
 
 
 class Member(models.Model):
-    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    user = models.ForeignKey(Librarian, on_delete=models.CASCADE)
     book = models.ForeignKey(BookDetails, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
@@ -69,7 +69,7 @@ class Member(models.Model):
 
 
 class FineMaintanence(models.Model):
-    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    user = models.ForeignKey(Librarian, on_delete=models.CASCADE)
     book = models.ForeignKey(BookDetails, on_delete=models.CASCADE)
     fine_cost = models.IntegerField()
     paid_cost = models.IntegerField()
