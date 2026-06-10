@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Librarian, Member, BookDetails, BookCategory
 from .serializers import LibrarianSerializers, MemberSerializers
-from .forms import LoginForm, LibrarianFrom
+from .forms import LoginForm, LibrarianFrom, BookCategoryForm
 from django.contrib.auth.models import User
 from django.contrib import messages
 import json
@@ -27,9 +27,9 @@ def log_in_page(request):
 
 
 def librarian_registration_page(request):
-    form = UserFrom()
+    form = LibrarianFrom()
     if request.method == "POST":
-        form = UserFrom(request.POST)
+        form = LibrarianFrom(request.POST)
         if form.is_valid():
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
@@ -129,22 +129,79 @@ def librarian_details_page(request):
 
     return render(request, "librarians_details/librarians_details.html", {"users": user_list})
 
+
+
+def member_registration_page(request):
+    # form = MemberFrom()
+    # if request.method == "POST":
+    #     form = MemberFrom(request.POST)
+    #     if form.is_valid():
+    #         name = form.cleaned_data["name"]
+    #         email = form.cleaned_data["email"]
+    #         phone_number = form.cleaned_data["phone_number"]
+    #         address = form.cleaned_data["address"]
+    #         membership_date = form.cleaned_data["membership_date"]
+    #         is_active = form.cleaned_data["name"]
+    #         name = form.cleaned_data["name"]
+    #         name = form.cleaned_data["name"]
+
+
+
+    return render(request, "member_registration/member_registration.html")
+
+def member_details_page(request):
+    return render(request, "member_details/member_details.html")
+
+
+
 def book_category_registration_page(request):
-    return render(request, "book_category_registration/book_category_registration.html")
+    form = BookCategoryForm()
+    category = BookCategory.objects.all()
+    category_list = []
+    for choice in category:
+        id = choice.id
+        choice_value = choice.choice
+
+        # ================================>
+        print("ID       : ", id)
+        print("CHOICE   : ", choice_value)
+        # ================================>
+
+        category_list.append({
+            "id" : id,
+            "choice" : choice_value
+        })
+        
+    if request.method == "POST":
+        form = BookCategoryForm(request.POST)
+        if form.is_valid():
+            choice = form.cleaned_data["choice"].title()
+
+            # ================================>
+            print("CHOICE : ", choice)
+            # ================================>
+
+            if BookCategory.objects.filter(choice=choice).exists():
+                return render(request, "book_category_registration/book_category_registration.html", {
+                    "form": form,
+                    "category_list": category_list,
+                    "error": "Category already exists"
+                })
+
+            BookCategory.objects.create(choice=choice)
+            return render(request, "book_category_registration/book_category_registration.html", {"form": form, "category_list": category_list, "success": "Category Added Successfully!"})
+        else:
+            print(form.errors)
+
+    else:
+        return render(request, "book_category_registration/book_category_registration.html", {"form": form, "category_list": category_list})
+
 
 def book_registration_page(request):
     return render(request, "book_registration/add_books.html")
 
 def book_details_page(request):
     return render(request, "book_details/book_details.html")
-
-
-
-def member_registration_page(request):
-    return render(request, "member_registration/member_registration.html")
-
-def member_details_page(request):
-    return render(request, "member_details/member_details.html")
 
 
 

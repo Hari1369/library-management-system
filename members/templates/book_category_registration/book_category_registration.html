@@ -2,33 +2,81 @@
 {% block title %}Add Librarian {% endblock %}
 
 {% block content %}
-  <div class="section-header mb-3">
-    <span class="section-title">
-      <i class="bi bi-person-plus me-2"></i>Add New Book Category
-    </span>
-    <a href="" class="btn btn-lms-outline btn-sm">← Back to Dashboard</a>
-  </div>
 
+<div class="section-header mb-3">
+  <span class="section-title">
+    <i class="bi bi-person-plus me-2"></i>Add Book Category
+  </span>
+  <a href="" class="btn btn-lms-outline btn-sm">← Back to Dashboard</a>
+</div>
+
+{% if success %}
+  <div class="alert alert-success">
+    {{ success }}
+  </div>
+{% endif %}
+
+{% if error %}
+  <div class="alert alert-danger">
+    {{ error }}
+  </div>
+{% endif %}
+
+<!-- FORM SECTION -->
 <div class="d-flex justify-content-center">
   <div class="lms-card w-100">
-      <form method="post">
-        {% csrf_token %}
 
-        <div class="row g-3">
-          <div class="col-12 col-md-6 col-lg-6">
-            <label class="lms-form-label">First name</label>
-            <input type="text" name="categories" class="form-control lms-form-control" placeholder="Science Fiction" required>
-          </div>
-        </div>
+    <form method="post">
+      {% csrf_token %}
 
-        <div class="d-flex gap-2 mt-4">
-          <button type="submit" class="btn btn-lms-primary">
-            <i class="bi bi-check-lg me-1"></i>Save Category
-          </button>
-          <a href="" class="btn btn-lms-outline">Cancel</a>
+      <div class="row g-3">
+        <div class="col-12 col-md-6 col-lg-6">
+          <label class="lms-form-label">Category</label>
+          <input type="text" name="choice" class="form-control lms-form-control"
+                 placeholder="Science Fiction" required>
         </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-lms-primary">
+          <i class="bi bi-check-lg me-1"></i>Save Category
+        </button>
+        <a href="" class="btn btn-lms-outline">Cancel</a>
+      </div>
 
     </form>
+
   </div>
-<div>
+</div>
+
+<!-- TABLE SECTION (IMPORTANT: OUTSIDE FLEX) -->
+<div class="mt-5">
+  <div class="lms-table">
+
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th class="text-center">Sr No.</th>
+          <th class="text-center">Category</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for item in category_list %}
+        <tr>
+          <td class="text-center">{{ forloop.counter }}</td>
+          <td class="text-center">{{ item.choice }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="2" class="text-center">No categories found</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+
+    </table>
+
+  </div>
+</div>
+
 {% endblock %}

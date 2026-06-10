@@ -21,12 +21,12 @@ class Librarian(models.Model):
 
 
 class BookCategory(models.Model):
-    choice = models.CharField(max_length=100)
+    choice = models.CharField(max_length=100, unique=True)
 
     class Meta:
         db_table = "book_category"
 
-    def __str__(str):
+    def __str__(self):
         return self.choice
 
 
