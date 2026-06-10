@@ -15,6 +15,10 @@
   <!-- Your custom CSS -->
   <link rel="stylesheet" href="{% static 'library_systems/css/library.css' %}">
 
+
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 </head>
 <body>
 
@@ -36,8 +40,8 @@
         <li class="nav-item"><a class="nav-link" href="{% url 'member_registration' %}"><i class="bi bi-person-plus me-1"></i>Add Member</a></li>
 
           <li class="nav-item"><a class="nav-link" href="{% url 'book_details' %}"><i class="bi bi-book me-1"></i>Book Details</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'book_registration' %}"><i class="bi bi-journal-plus me-1"></i>Book Registration</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'book_category_registration' %}"><i class="bi bi-tags me-1"></i>Book Categories</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'book_registration' %}"><i class="bi bi-journal-plus me-1"></i>Book Registration</a></li>
 
         <li class="nav-item"><a class="nav-link" href=""><i class="bi bi-box-arrow-right me-1"></i>Logout</a></li>
       </ul>

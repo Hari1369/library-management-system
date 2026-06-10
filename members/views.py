@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Librarian, Member, BookDetails, BookCategory
 from .serializers import LibrarianSerializers, MemberSerializers
-from .forms import LoginForm, LibrarianFrom, BookCategoryForm
+from .forms import LoginForm, LibrarianFrom, BookCategoryForm, BookForm
 from django.contrib.auth.models import User
 from django.contrib import messages
 import json
@@ -145,8 +145,6 @@ def member_registration_page(request):
     #         name = form.cleaned_data["name"]
     #         name = form.cleaned_data["name"]
 
-
-
     return render(request, "member_registration/member_registration.html")
 
 def member_details_page(request):
@@ -198,7 +196,58 @@ def book_category_registration_page(request):
 
 
 def book_registration_page(request):
-    return render(request, "book_registration/add_books.html")
+    form = BookForm()
+    if request.method == "POST":
+        form = BookForm(request.POST)
+        if form.is_valid():
+            title = form.cleaned_data['title'].title()
+            author = form.cleaned_data['author'].title()
+            category = form.cleaned_data['category']
+            publication_year = form.cleaned_data['publication_year']
+            total_copies = form.cleaned_data['total_copies']
+            available_copies = total_copies
+            category_id = category.id
+
+            # ================================>
+            print("TITLE                : ", title)
+            print("AUTOR                : ", author)
+            print("CATEGORY             : ", category_id)
+            print("PUBLICATION YEAR     : ", publication_year)
+            print("TOTAL COPIES         : ", total_copies)
+            print("AVAILABLE COPIES     : ", available_copies)
+            # ================================>
+
+            if BookDetails.objects.filter(title=title).exists():
+                return render(request, "book_registration/add_books.html", {
+                    "form": form,
+                    "error": "Book is already exists"
+                })
+
+            isbn_last = BookDetails.objects.order_by("-id").first()
+            if isbn_last is None:
+                isbn  = "BOO01"
+            else:
+                last_number = int(isbn_last.isbn[3:])
+                new_number = last_number + 1
+                isbn  = f"BOO{new_number:02d}"
+
+            try:
+                with transaction.atomic():
+                    book_insert = BookDetails.objects.create(
+                        isbn=isbn,
+                        title=title,
+                        author=author,
+                        publication_year=publication_year,
+                        total_copies=total_copies,
+                        available_copies=available_copies,
+                        category_id=category_id,
+                    )
+                    return render(request, "book_registration/add_books.html", {"form": form, "success": f"Book {book_insert.isbn} with Author {book_insert.author} Added Successfully!"})
+            except IntegrityError:
+                return render(request, "book_registration/add_books.html", {"form": form,"error": "Database error occurred. Try again."})
+    return render(request, "book_registration/add_books.html", {"form": form})
+
+
 
 def book_details_page(request):
     return render(request, "book_details/book_details.html")

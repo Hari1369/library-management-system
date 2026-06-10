@@ -12,27 +12,23 @@ class Librarian(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
     class Meta:
         db_table = "librarian_details"
-
     def __str__(self):
         return f"({self.username}) ({self.name}) ({self.surname}) ({self.email}) ({self.phone_number}) ({self.address}) ({self.is_active}) ({self.created_at}) ({self.updated_at})"
 
 
 class BookCategory(models.Model):
     choice = models.CharField(max_length=100, unique=True)
-
     class Meta:
         db_table = "book_category"
-
     def __str__(self):
         return self.choice
 
 
 class BookDetails(models.Model):
     isbn = models.CharField(max_length=20, unique=True)
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, unique=True)
     author = models.CharField(max_length=255)
     category = models.ForeignKey(BookCategory, on_delete=models.CASCADE)
     publication_year = models.IntegerField()
@@ -40,13 +36,10 @@ class BookDetails(models.Model):
     available_copies = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
     class Meta:
         db_table = "book_details"
-
     def __str__(self):
         return f"({self.isbn}) ({self.title}) ({self.author}) ({self.category}) ({self.publication_year}) ({self.total_copies}) ({self.available_copies}) ({self.created_at}) ({self.updated_at})"
-
 
 
 class Member(models.Model):
@@ -60,10 +53,8 @@ class Member(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
     class Meta:
         db_table = "member_detail"
-
     def __str__(self):
         return  f"{self.name} ({self.email}) ({self.phone_number}) ({self.address}) ({self.member_detail}) ({self.is_active}) ({self.created_at}) ({self.updated_at})"
 
@@ -77,12 +68,8 @@ class FineMaintanence(models.Model):
     paid_time = models.DateTimeField(auto_now=True) 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-
     class Meta:
         db_table = "fine_maintanence"
-
-
     def __str__(self):
         return f"({self.user}) ({self.book}) ({self.fine_cost}) ({self.paid_cost}) ({self.is_paid}) ({self.paid_time}) ({self.created_at}) ({self.updated_at})"
 
@@ -92,10 +79,7 @@ class NotificationRecord(models.Model):
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=False)
-
-
     class Meta:
         db_table = "notifications"
-
     def __str__(self):
         return f"({self.user}) ({self.message}) ({self.created_at}) ({self.status})"
