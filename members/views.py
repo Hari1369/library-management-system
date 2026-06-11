@@ -2,12 +2,15 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.db import transaction, IntegrityError
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
 from .models import Librarian, Member, BookDetails, BookCategory
 from .serializers import LibrarianSerializers, MemberSerializers, BookDetailsSerializers
 from .forms import LoginForm, LibrarianFrom, BookCategoryForm, BookForm, MemberFrom
+from .decorators import role_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from datetime import datetime
@@ -15,7 +18,7 @@ import json
 
 
 
-def log_in_page(request):
+def login_page(request):
     form = LoginForm()
     if request.method == "POST":
         form = LoginForm(request.POST)
@@ -26,8 +29,42 @@ def log_in_page(request):
             print("USERNAME : ", username)
             print("PASSWORD : ", password)
             # ================================>
+            user = authenticate(request, username=username, password=password)
+            librarian = Librarian.objects.filter(username=username,is_active=True).first()
+
+            if user is not None:
+                login(request, user)
+                request.session["id"] = user.id
+                request.session["username"] = user.username
+                if not user.is_active:
+                    messages.error(request, "Account disabled.")
+                    return render(request, "log_in/log_in.html", {"form": form})
+                if user.is_superuser and user.is_staff:
+                    request.session["role"] = "super_admin"
+                elif librarian:
+                    request.session["librarian_id"] = librarian.id
+                    request.session["role"] = "librarian"
+                else:
+                    messages.error(request, "Unauthorized role.")
+                    return render(request, "log_in/log_in.html", {"form": form})
+
+                return redirect("dashboard_page")
+            else:
+                messages.error(request, "Invalid username or password.")
     return render(request, "log_in/log_in.html", {"form": form})
 
+
+def logout_page(request):
+    logout(request)
+    return redirect('log_in')
+
+@login_required
+@role_required(["super_admin","librarian"])
+def dashboard_page(request):
+    return render(request, "librarians_dashboard/librarians_dashboard.html")
+
+@login_required
+@role_required(["super_admin"])
 def librarian_registration_page(request):
     form = LibrarianFrom()
     if request.method == "POST":
@@ -81,10 +118,15 @@ def librarian_registration_page(request):
                         is_shown=is_active
                     )
                     return render(request, "librarians_registration/librarians_registration.html", {"form": form, "success": "Librarian inserted successfully!"})
-            except IntegrityError:
-                return render(request, "librarians_registration/librarians_registration.html", {"form": form,"error": "Database error occurred. Try again."})
+            except Exception as e:
+                print("FULL ERROR:", e)
+                return render(request, "librarians_registration/librarians_registration.html", {"form": form,"error": str(e)})
+        return render(request, "librarians_registration/librarians_registration.html", {"form": form})
     return render(request, "librarians_registration/librarians_registration.html", {"form": form})
+    
 
+@login_required
+@role_required(["super_admin"])
 def librarian_details_page(request):
     librarian = Librarian.objects.filter(is_shown=True)
     user_list = []
@@ -232,6 +274,9 @@ def librarian_delete_request(request):
         "message": "Member is already inactive or invalid request"
     }, status=400)
 
+
+@login_required
+@role_required(["super_admin", "librarian"])
 def member_registration_page(request):
     form = MemberFrom()
     if request.method == "POST":
@@ -276,6 +321,8 @@ def member_registration_page(request):
         form = MemberFrom()
     return render(request, "member_registration/member_registration.html", {"form" : form})
 
+@login_required
+@role_required(["super_admin", "librarian"])
 def member_details_page(request):
     members = Member.objects.filter(is_active=True)
     member_list = []
@@ -309,7 +356,6 @@ def member_details_page(request):
             "is_active" : is_active,
             "created_at" : created_at,
         })
-
     return render(request, "member_details/member_details.html",  {"members": members})
 
 @csrf_exempt
@@ -397,6 +443,8 @@ def member_delete_request(request):
             "message": "Member is already inactive or invalid request"
         }, status=400)
 
+@login_required
+@role_required(["super_admin", "librarian"])
 def book_category_registration_page(request):
     form = BookCategoryForm()
     category = BookCategory.objects.all()
@@ -431,14 +479,16 @@ def book_category_registration_page(request):
                 })
 
             BookCategory.objects.create(choice=choice)
-            return render(request, "book_category_registration/book_category_registration.html", {"form": form, "category_list": category_list, "success": "Category Added Successfully!"})
+            return redirect("book_category_registration")
+            # return render(request, "book_category_registration/book_category_registration.html", {"form": form, "category_list": category_list, "success": "Category Added Successfully!"})
         else:
             print("something went wrong!")
             print(form.errors)
     else:
         return render(request, "book_category_registration/book_category_registration.html", {"form": form, "category_list": category_list})
 
-
+@login_required
+@role_required(["super_admin", "librarian"])
 def book_registration_page(request):
     form = BookForm()
     if request.method == "POST":
@@ -491,6 +541,8 @@ def book_registration_page(request):
                 return render(request, "book_registration/add_books.html", {"form": form,"error": "Database error occurred. Try again."})
     return render(request, "book_registration/add_books.html", {"form": form})
 
+@login_required
+@role_required(["super_admin", "librarian"])
 def book_details_page(request):
     book_details = BookDetails.objects.filter(is_acitve=True)
     categories = BookCategory.objects.all()

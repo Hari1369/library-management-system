@@ -18,6 +18,13 @@
     <div class="login-title">Library Management</div>
     <div class="login-subtitle">Sign in to your account</div>
 
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-danger py-2 text-center" style="font-size:12px;">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
     {% if form.errors %}
       <div class="alert alert-danger py-2 text-center" style="font-size:12px;">
         Invalid username or password.
