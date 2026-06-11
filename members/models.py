@@ -10,6 +10,7 @@ class Librarian(models.Model):
     phone_number = models.CharField(max_length=15)
     address = models.TextField()  
     is_active = models.BooleanField(default=True)
+    is_shown = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     class Meta:
@@ -34,6 +35,7 @@ class BookDetails(models.Model):
     publication_year = models.IntegerField()
     total_copies = models.IntegerField()
     available_copies = models.IntegerField()
+    is_acitve = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     class Meta:

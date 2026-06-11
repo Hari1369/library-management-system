@@ -65,7 +65,14 @@
           </button>
         </td>
         <td class="text-center">
-          <button class="btn btn-danger btn-sm">
+          <button class="btn btn-danger btn-sm" 
+          onclick="del_data(
+            '{{ user.username }}',
+            '{{ user.name }}',
+            '{{ user.email|escapejs }}',
+            '{{ user.is_active }}'
+          )"
+          >
             <i class="bi bi-trash-fill"></i>
           </button>
         </td>
@@ -186,35 +193,52 @@ window.save_user = async function() {
       email,
       phone,
       address
-    }
+    };
     
-  try {
-    const response = await fetch("/update_librarian/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrftoken
-      },
-      body: JSON.stringify(formData)
-    });
-    const data = await response.json();
-    if (data.status === "success") {
-      alert("Member updated successfully!");
-      const modalEl = document.getElementById('editlibrarianModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      modal.hide();
-      location.reload();
-    } else {
-      alert("Update failed!");
+    try {
+      const response = await fetch("/update_librarian/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify(formData)
+      });
+      const data = await response.json();
+      if (data.status === "success") {
+        alert("Member updated successfully!");
+        const modalEl = document.getElementById('editlibrarianModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        location.reload();
+      } else {
+        alert("Update failed!");
+      }
+    } catch (error) {
+      console.error("Error:", error);
     }
-  } catch (error) {
-    console.error("Error:", error);
-  }
 }
-
-
-
-  
+window.del_data = async function(username) {
+    try {
+        const response = await fetch("/librarian_delete/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken
+            },
+            body: JSON.stringify({
+                username: username
+            })
+        });
+        const data = await response.json();
+        alert(data.message);
+        if (response.ok) {
+            location.reload();
+        }
+    } catch (error) {
+        console.error("DELETE ERROR:", error);
+    }
+}
 
 function getCookie(name) {
     let cookieValue = null;

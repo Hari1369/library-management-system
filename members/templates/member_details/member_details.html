@@ -64,7 +64,12 @@
         </button>
       </td>
       <td class="text-center">
-        <button class="btn btn-danger btn-sm">
+        <button class="btn btn-danger btn-sm" onclick="del_data(
+            '{{ member.id }}',
+            '{{ member.name|escapejs }}',
+            '{{ member.email|escapejs }}',
+            '{{ member.is_active }}',
+          )">
           <i class="bi bi-trash-fill"></i>
         </button>
       </td>
@@ -171,7 +176,6 @@ window.save_member = async function() {
   console.log("MEMBERSHIP DATE  : ", membership_date);
   // ========================================> 
 
-
   const formData = {
     id,
     name,
@@ -206,7 +210,42 @@ window.save_member = async function() {
 }
 
 
+window.del_data = async function(id, name, email, is_active) {
+  console.log("ID         :", id)
+  console.log("NAME       :", name)
+  console.log("EMAIL      :", email)
+  console.log("IS_ACTIVE  :", is_active);
 
+  const formData = {
+    id,
+    name,
+    email,
+    is_active
+  };
+
+  try {
+    const response = await fetch("/member_delete/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken
+      },
+      body: JSON.stringify(formData)
+    });
+    const data = await response.json();
+      if (data.status === "success") {
+        alert("Member Deleted successfully!");
+        location.reload();
+      } else {
+        alert("Delete failed!");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+
+
+
+}
 
 
 

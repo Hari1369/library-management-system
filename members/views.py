@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
 from .models import Librarian, Member, BookDetails, BookCategory
-from .serializers import LibrarianSerializers, MemberSerializers
+from .serializers import LibrarianSerializers, MemberSerializers, BookDetailsSerializers
 from .forms import LoginForm, LibrarianFrom, BookCategoryForm, BookForm, MemberFrom
 from django.contrib.auth.models import User
 from django.contrib import messages
@@ -57,7 +57,6 @@ def librarian_registration_page(request):
                 return HttpResponse("Username already exists", status=409)
                 if Librarian.objects.filter(username=username).exists():
                     return HttpResponse("Username already exists Please do active again", status=409)
-
             try:
                 with transaction.atomic():
                     user_insert = User.objects.create_user(
@@ -70,7 +69,6 @@ def librarian_registration_page(request):
                         is_staff=is_active,
                         is_superuser=False 
                     )                        
-
                     Librarian.objects.create(
                         username=username,
                         password=password,
@@ -79,7 +77,8 @@ def librarian_registration_page(request):
                         email=email,
                         phone_number=phone_number,
                         address=address,
-                        is_active=is_active
+                        is_active=is_active,
+                        is_shown=is_active
                     )
                     return render(request, "librarians_registration/librarians_registration.html", {"form": form, "success": "Librarian inserted successfully!"})
             except IntegrityError:
@@ -87,7 +86,7 @@ def librarian_registration_page(request):
     return render(request, "librarians_registration/librarians_registration.html", {"form": form})
 
 def librarian_details_page(request):
-    librarian = Librarian.objects.all()
+    librarian = Librarian.objects.filter(is_shown=True)
     user_list = []
     for user in librarian:
         id = user.id
@@ -148,8 +147,6 @@ def librarian_update_request(request):
                 if user_1:
                     user_1.is_active = False
                     user_1.save()
-
-                    # password changed → handle separately
                     librarian.password = password
                     librarian.name = name
                     librarian.surname = surname
@@ -159,7 +156,6 @@ def librarian_update_request(request):
                     librarian.is_active = False
                     librarian.save()
             else:
-                # password not changed → normal update
                 librarian.name = name
                 librarian.surname = surname
                 librarian.email = email
@@ -182,12 +178,59 @@ def librarian_update_request(request):
             "message": "Data received successfully",
             "received_data": data
         })
+    return JsonResponse({
+        "status": "error",
+        "message": "Something Went Wrong"
+    }, status=405)
+
+@csrf_exempt
+def librarian_delete_request(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        username = data.get("username")
+        name = data.get("name")
+        email = data.get("email")
+        is_active = str(data.get("is_active")).lower() == "true"
+
+        # ================================>
+        print("USERNAME     : ", username)
+        print("NAME         : ", name)
+        print("EMAIL        : ", email)
+        print("IS ACTIVE    : ", is_active)
+        # ================================>
+
+        if is_active:
+            return JsonResponse({
+                "status": "error",
+                "message": "Active Librarian cannot be deleted"
+            }, status=400)
+            
+        try:
+            librarian = Librarian.objects.get(username=username)
+            if librarian.is_active:
+                return JsonResponse({
+                    "status": "error",
+                    "message": "Active Librarian cannot be deleted"
+                }, status=400)
+
+            librarian.is_shown = False
+            librarian.save()
+
+            return JsonResponse({
+                "status": "success",
+                "message": "Librarian deleted successfully"
+            })
+
+        except Librarian.DoesNotExist:
+            return JsonResponse({
+                "status": "error",
+                "message": "Librarian not found"
+            }, status=404)
 
     return JsonResponse({
         "status": "error",
-        "message": "Only POST method allowed"
-    }, status=405)
-
+        "message": "Member is already inactive or invalid request"
+    }, status=400)
 
 def member_registration_page(request):
     form = MemberFrom()
@@ -234,7 +277,7 @@ def member_registration_page(request):
     return render(request, "member_registration/member_registration.html", {"form" : form})
 
 def member_details_page(request):
-    members = Member.objects.all()
+    members = Member.objects.filter(is_active=True)
     member_list = []
     for i in members:
         id = i.id
@@ -315,11 +358,44 @@ def member_update_request(request):
 
     return JsonResponse({
         "status": "error",
-        "message": "Only POST method allowed"
+        "message": "Something Went Wrong!"
     }, status=405)
 
 
+@csrf_exempt
+def member_delete_request(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        member_id = data.get("id")
+        name = data.get("name")
+        is_active = data.get("is_active")
+        is_active = True if str(is_active).lower() == "true" else False
 
+        # ================================>
+        print("ID                   :", member_id)
+        print("NAME                 :", name)
+        print("ACTIVE               :", is_active)
+        # ================================>
+
+        if is_active is True:
+            try:
+                member = Member.objects.get(id=member_id)
+                member.is_active = False
+                member.save()
+                return JsonResponse({
+                    "status": "success",
+                    "message": "Member deactivated successfully",
+                    "id": member_id,
+                    "is_active": member.is_active
+                })
+            except Member.DoesNotExist:
+                return JsonResponse({
+                    "error": "Member not found"
+                }, status=404)
+        return JsonResponse({
+            "status": "error",
+            "message": "Member is already inactive or invalid request"
+        }, status=400)
 
 def book_category_registration_page(request):
     form = BookCategoryForm()
@@ -338,7 +414,6 @@ def book_category_registration_page(request):
             "id" : id,
             "choice" : choice_value
         })
-        
     if request.method == "POST":
         form = BookCategoryForm(request.POST)
         if form.is_valid():
@@ -417,7 +492,7 @@ def book_registration_page(request):
     return render(request, "book_registration/add_books.html", {"form": form})
 
 def book_details_page(request):
-    book_details = BookDetails.objects.all()
+    book_details = BookDetails.objects.filter(is_acitve=True)
     categories = BookCategory.objects.all()
     book_details_list = []
 
@@ -450,9 +525,6 @@ def book_details_page(request):
             "category": book.category.choice,
         })
     return render(request, "book_details/book_details.html", {"book_details" : book_details_list, "categories": categories})
-
-
-
 
 @csrf_exempt
 def book_update_request(request):
@@ -523,6 +595,55 @@ def book_update_request(request):
                 "received_data": data
             })
 
+    return JsonResponse({
+        "status": "error",
+        "message": "Something Went Wrong!"
+    }, status=405)
+
+
+
+@csrf_exempt
+def book_delete_request(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        isbn = data.get("isbn")
+        # ================================>
+        print("ISBN     : ",isbn)
+        # ================================>
+        try:
+            book = BookDetails.objects.get(isbn=isbn)
+            if book.is_acitve:
+                book.is_acitve = False
+                book.save()
+
+                return JsonResponse({
+                    "status": "success",
+                    "message": "Book deleted successfully"
+                }, status=200)
+
+            else:
+                return JsonResponse({
+                    "status": "error",
+                    "message": "Book is already inactive"
+                }, status=400)
+
+        except BookDetails.DoesNotExist:
+            return JsonResponse({
+                "status": "error",
+                "message": "Book not found"
+            }, status=404)
+
+        return JsonResponse({
+            "status": "error",
+            "message": "Book is already inactive or invalid request"
+        }, status=400)
+
+
+    return JsonResponse({
+        "status": "error",
+        "message": "Error Something Went Wrong"
+    }, status=400)
+
 
 
 
@@ -545,7 +666,7 @@ def book_update_request(request):
 # =====================================================================================================================================================
 # =====================================================================================================================================================
 
-@api_view(["GET","POST"])
+@api_view(["GET","POST","PUT","PATCH","DELETE"])
 def member_api(request):
     if request.method == "GET":
         member = Member.objects.all()
@@ -555,19 +676,106 @@ def member_api(request):
         serializer = MemberSerializers(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            return Response({"message" : f"{user.username} registered successfully!"}, status=201)
+            return Response({"message": f"{user.name} registered successfully!"}, status=201)
         else:
-            return Response(serializer.error, status=400)
+            return Response(serializer.errors, status=400)
+    elif request.method == "PUT":
+        member = Member.objects.get(id=id)
+        if member.id is None:
+            return Response(
+                {"error": "Member not found"},
+                status=404
+            )
+        serializer = MemberSerializers(member,data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Member updated successfully"},
+                status=200
+            )
+        return Response(serializer.errors, status=400)
+    elif request.method == "PATCH":
+        member = Member.objects.get(id=id)
+        if member.id is None:
+            return Response(
+                {"error": "Member not found"},
+                status=404
+            )
+        serializer = MemberSerializers(member,data=request.data,partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Member updated partially"},
+                status=200
+            )
+        return Response(serializer.errors, status=400)
+    elif request.method == "DELETE":
+        member = Member.objects.get(id=id)
+        if member.id is None:
+            return Response(
+                {"error": "Member not found"},
+                status=404
+            )
+        member.delete()
+        return Response(
+            {"message": "Member deleted successfully"},
+            status=200
+        )
 
 
-@api_view(["GET","POST"])
+
+@api_view(["GET","POST","PUT","PATCH","DELETE"])
 def books_api(request):
     if request.method == "GET":
         books = BookDetails.objects.all()
-        serializer = BookDetails(books, many=True)
+        serializer = BookDetailsSerializers(books, many=True)
         return Response(serializer.data, status=200)
     elif request.method == "POST":
         serializer = BookDetailsSerializers(data = request.data)
         if serializer.is_valid():
             book = serializer.save()
             return Response({"message" : f"{book.title} registered successfully!"})
+        else:
+            return Response(serializer.errors, status=400)
+    elif request.method == "PUT":
+        book = BookDetails.objects.get(id=id)
+        if book.id is None:
+            return Response(
+                {"error": "Book not found"},
+                status=404
+            )
+        serializer = BookDetailsSerializers(book, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Book updated successfully (PUT)"},
+                status=200
+            )
+        return Response(serializer.errors, status=400)
+    elif request.method == "PATCH":
+        book = BookDetails.objects.get(id=id)
+        if book.id is None:
+            return Response(
+                {"error": "Book not found"},
+                status=404
+            )
+        serializer = BookDetailsSerializers(book, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "Book updated partially (PATCH)"},
+                status=200
+            )
+        return Response(serializer.errors, status=400)
+    elif request.method == "DELETE":
+        book = BookDetails.objects.get(id=id)
+        if book.id is None:
+            return Response(
+                {"error": "Book not found"},
+                status=404
+            )
+        book.delete()   
+        return Response(
+            {"message": "Book deleted successfully"},
+            status=200
+        )     
