@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.db import transaction, IntegrityError
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.http import JsonResponse
 from .models import Librarian, Member, BookDetails, BookCategory
 from .serializers import LibrarianSerializers, MemberSerializers
 from .forms import LoginForm, LibrarianFrom, BookCategoryForm, BookForm, MemberFrom
@@ -125,6 +127,68 @@ def librarian_details_page(request):
         })
     return render(request, "librarians_details/librarians_details.html", {"users" : user_list})
 
+@csrf_exempt
+def librarian_update_request(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        print("DATA : ", data)
+        username = data.get("username")
+        password = data.get("password")
+        name = data.get("name")
+        surname = data.get("surname")
+        email = data.get("email")
+        phone = data.get("phone")
+        address = data.get("address")
+
+        librarian = Librarian.objects.filter(username=username).first()
+        user_1 = User.objects.filter(username=username).first()
+
+        if librarian:
+            if librarian.password != password:
+                if user_1:
+                    user_1.is_active = False
+                    user_1.save()
+
+                    # password changed → handle separately
+                    librarian.password = password
+                    librarian.name = name
+                    librarian.surname = surname
+                    librarian.email = email
+                    librarian.phone = phone
+                    librarian.address = address
+                    librarian.is_active = False
+                    librarian.save()
+            else:
+                # password not changed → normal update
+                librarian.name = name
+                librarian.surname = surname
+                librarian.email = email
+                librarian.phone = phone
+                librarian.address = address
+                librarian.save()
+        else:
+            Librarian.objects.create(
+                username=username,
+                password=password,
+                name=name,
+                surname=surname,
+                email=email,
+                phone=phone,
+                address=address
+            )
+
+        return JsonResponse({
+            "status": "success",
+            "message": "Data received successfully",
+            "received_data": data
+        })
+
+    return JsonResponse({
+        "status": "error",
+        "message": "Only POST method allowed"
+    }, status=405)
+
+
 def member_registration_page(request):
     form = MemberFrom()
     if request.method == "POST":
@@ -204,6 +268,58 @@ def member_details_page(request):
         })
 
     return render(request, "member_details/member_details.html",  {"members": members})
+
+@csrf_exempt
+def member_update_request(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        member_id = data.get("id")
+        name = data.get("name")
+        email = data.get("email")
+        phone = data.get("phone")
+        address = data.get("address")
+        membership_date = data.get("membership_date")
+        
+        # ================================>
+        print("ID                   :", member_id)
+        print("NAME                 :", name)
+        print("EMAIL                :", email)
+        print("PHONE                :", phone)
+        print("ADDRESSS             :", address)
+        print("MEMBERSHIP DATE      :", membership_date)
+        # ================================>
+
+        try:
+            member = Member.objects.get(id=member_id)
+
+            member.name = name
+            member.email = email
+            member.phone_number = phone
+            member.address = address
+            if membership_date:
+                member.membership_date = membership_date
+
+            member.save()
+
+        except Member.DoesNotExist:
+            return JsonResponse({
+                "status": "error",
+                "message": "Member not found"
+            }, status=404)
+
+        return JsonResponse({
+            "status": "success",
+            "message": "Data received successfully",
+            "received_data": data
+        })
+
+    return JsonResponse({
+        "status": "error",
+        "message": "Only POST method allowed"
+    }, status=405)
+
+
+
 
 def book_category_registration_page(request):
     form = BookCategoryForm()
@@ -302,6 +418,7 @@ def book_registration_page(request):
 
 def book_details_page(request):
     book_details = BookDetails.objects.all()
+    categories = BookCategory.objects.all()
     book_details_list = []
 
     for book in book_details:
@@ -332,20 +449,79 @@ def book_details_page(request):
             "available_copies": book.available_copies,
             "category": book.category.choice,
         })
-    return render(request, "book_details/book_details.html", {"book_details" : book_details_list})
+    return render(request, "book_details/book_details.html", {"book_details" : book_details_list, "categories": categories})
 
 
 
 
+@csrf_exempt
+def book_update_request(request):
+    print("HELLOW")
+    if request.method == "POST":
+        data = json.loads(request.body)
+        isbn = data.get("isbn")
+        title = data.get("title")
+        author = data.get("author")
+        category = data.get("category")
+        publication_year = data.get("publication_year")
+        add_copies = data.get("add_copies")
+        add_copies = int(add_copies) if add_copies not in [None, ""] else 0
+        total_copies = data.get("total_copies")
+        available_copies = data.get("available_copies")
 
+        # ================================>
+        print("ISBN             :", isbn)
+        print("TITLE            :", title)
+        print("AUTHOR           :", author)
+        print("CATEGORY         :", category)
+        print("PUBLICATION YEAR :", publication_year)
+        print("ADD COPIES       :", add_copies)
+        print("TOTAL COPIES     :", total_copies)
+        print("AVAILABLE COPIES :", available_copies)
+        # ================================>
 
+        try:
+            book = BookDetails.objects.get(isbn=isbn)
 
+            if data.get("title"):
+                book.title = data.get("title")
 
+            if data.get("author"):
+                book.author = data.get("author")
 
+            if data.get("category"):
+                book.category = BookCategory.objects.get(id=category)
 
+            if data.get("publication_year"):
+                book.publication_year = data.get("publication_year")
 
+            if add_copies > 0:
+                book.total_copies += add_copies
+                book.available_copies += add_copies
 
+            book.save()
 
+            return JsonResponse({
+                "status": "success",
+                "message": "Book updated successfully"
+            })
+
+        except BookDetails.DoesNotExist:
+            BookDetails.objects.create(
+                isbn=isbn,
+                title=data.get("title"),
+                author=data.get("author"),
+                category=data.get("category"),
+                publication_year=data.get("publication_year"),
+                total_copies=add_copies,
+                available_copies=add_copies
+            )
+
+            return JsonResponse({
+                "status": "success",
+                "message": "Data received successfully",
+                "received_data": data
+            })
 
 
 

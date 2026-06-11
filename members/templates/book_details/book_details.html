@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Members — LibraryMS{% endblock %}
+{% block title %}Books{% endblock %}
 
 {% block content %}
 <div class="section-header mb-2">
@@ -26,6 +26,8 @@
         <th class="text-center">Publication Year</th>
         <th class="text-center">Total copies</th>
         <th class="text-center">Available Copies</th>
+        <th class="text-center">Update</th>
+        <th class="text-center">Delete</th>
       </tr>
     </thead>
   <tbody>
@@ -34,17 +36,220 @@
       <td class="text-center">{{ forloop.counter }}</td>
       <td class="text-center">{{ book.title }}</td>
       <td class="text-center">{{ book.author }}</td>
-      <td class="text-center">{{ book.category.choice }}</td>
+      <td class="text-center">{{ book.category }}</td>
       <td class="text-center">{{ book.publication_year }}</td>
       <td class="text-center">{{ book.total_copies }}</td>
       <td class="text-center">{{ book.available_copies }}</td>
+      <td class="text-center">
+        <button class="btn btn-primary btn-sm 
+        "onclick="submit_data(
+            '{{ book.isbn }}',
+            '{{ book.title }}',
+            '{{ book.author|escapejs }}',
+            '{{ book.category|escapejs }}',
+            '{{ book.publication_year|escapejs }}',
+            '{{ book.total_copies|escapejs }}',
+            '{{ book.available_copies }}',
+          )">
+          <i class="bi bi-pencil-square"></i>
+        </button>
+      </td>
+      <td class="text-center">
+        <button class="btn btn-danger btn-sm">
+          <i class="bi bi-trash-fill"></i>
+        </button>
+      </td>
     </tr>
     {% endfor %}
   </tbody>
   </table>
 </div>
 
+
+
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editBookModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Book</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <input type="hidden" id="isbn">
+
+
+        <div class="mb-3">
+          <label class="form-label">Title</label>
+          <input type="text" id="book_title" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Author</label>
+          <input type="text" id="book_author" class="form-control">
+        </div>
+
+        <div class="mb-2">
+          <label>Category</label>
+          <select id="book_category" class="form-control">
+            {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.choice }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Publication Year</label>
+          <input type="number" id="book_publication_year" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Add Copies</label>
+          <input type="number" id="book_add_copies" class="form-control">
+        </div>
+
+
+        <div class="mb-3">
+          <label class="form-label">Total Copies</label>
+          <input type="number" id="book_total_copies" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Available Copies</label>
+          <input type="number" id="book_available_copies" class="form-control" disabled>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-success" onclick="save_book()">Save</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+
 <!-- Pagination -->
+<script>
+window.submit_data = function(isbn, title, author, category, year, total, available) {
+  // ========================================> 
+  console.log("ISBN               : ", isbn);
+  console.log("TITLE              : ", title);
+  console.log("AUTHOR             : ", author);
+  console.log("CATEGORY           : ", category);
+  console.log("YEAR               : ", year);
+  console.log("ADD COPIES         : ", total);
+  console.log("AVAILABLE COPIES   : ", available);
+  // ========================================> 
+
+  var categorySelect = document.getElementById("book_category");
+
+  for (var i = 0; i < categorySelect.options.length; i++) {
+      if (categorySelect.options[i].text.trim() === category.trim()) {
+          categorySelect.selectedIndex = i;
+          break;
+      }
+  }
+
+  document.getElementById("isbn").value = isbn;
+  document.getElementById("book_title").value = title;
+  document.getElementById("book_author").value = author;
+  document.getElementById("book_publication_year").value = year;
+  document.getElementById("book_total_copies").value = total;
+  document.getElementById("book_available_copies").value = available;
+
+  const modalEl = document.getElementById('editBookModal');
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+}
+
+
+window.save_book = async function() {
+  var isbn = document.getElementById("isbn").value;
+  var title = document.getElementById("book_title").value;
+  var author = document.getElementById("book_author").value;
+  var category = document.getElementById("book_category").value;
+  var publication_year = document.getElementById("book_publication_year").value;
+  var add_copies = document.getElementById("book_add_copies").value;
+  var total_copies = document.getElementById("book_total_copies").value;
+  var available_copies = document.getElementById("book_available_copies").value;
+
+  // ========================================> 
+  console.log("ISBN               : ", isbn);
+  console.log("TITLE              : ", title);
+  console.log("AUTHOR             : ", author);
+  console.log("CATEGORY           : ", category);
+  console.log("YEAR               : ", publication_year);
+  console.log("ADD COPIES         : ", add_copies);
+  console.log("TOTAL COPIES       : ", total_copies);
+  console.log("AVAILABLE COPIES   : ", available_copies);
+  // ========================================> 
+
+  const formData = {
+    isbn,
+    title,
+    author,
+    category,
+    publication_year,
+    add_copies,
+    total_copies,
+    available_copies
+  }
+
+  try {
+    const response = await fetch("/update_book/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken
+      },
+      body: JSON.stringify(formData)
+    });
+    const data = await response.json();
+    if (data.status === "success") {
+      alert("Member updated successfully!");
+      const modalEl = document.getElementById('editBookModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+      location.reload();
+    } else {
+      alert("Update failed!");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+
+
+
+
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+</script>
 
 
 {% endblock %}

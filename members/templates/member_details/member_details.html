@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Members — LibraryMS{% endblock %}
+{% block title %}Members{% endblock %}
 
 {% block content %}
 <div class="section-header mb-2">
@@ -19,41 +19,213 @@
 <table class="table mb-0">
   <thead>
     <tr>
-      <th>Sr No.</th>
-      <th>Name</th>
-      <th>Email</th>
-      <th>Phone Number</th>
-      <th>Address</th>
-      <th>Membership Date</th>
-      <th>Active</th>
-      <th>Registered At</th>
+      <th class="text-center">Sr No.</th>
+      <th class="text-center">Name</th>
+      <th class="text-center">Email</th>
+      <th class="text-center">Phone Number</th>
+      <th class="text-center">Address</th>
+      <th class="text-center">Membership Date</th>
+      <th class="text-center">Active</th>
+      <th class="text-center">Registered At</th>
+      <th class="text-center">Update</th>
+      <th class="text-center">Delete</th>
     </tr>
   </thead>
-
   <tbody>
     {% for member in members %}
     <tr>
-      <td>{{ forloop.counter }}</td>
-      <td>{{ member.name }}</td>
-      <td>{{ member.email }}</td>
-      <td>{{ member.phone_number }}</td>
-      <td>{{ member.address }}</td>
-      <td>{{ member.membership_date }}</td>
-      <td>
+      <td class="text-center">{{ forloop.counter }}</td>
+      <td class="text-center">{{ member.name }}</td>
+      <td class="text-center">{{ member.email }}</td>
+      <td class="text-center">{{ member.phone_number }}</td>
+      <td class="text-center">{{ member.address }}</td>
+      <td class="text-center">{{ member.membership_date }}</td>
+      <td class="text-center">
         {% if member.is_active %}
-          ✅
+          <i class="bi bi-check-circle-fill text-success text-center"></i>
         {% else %}
-          ❌
+          <i class="bi bi-x-circle-fill text-danger text-center"></i>
         {% endif %}
       </td>
-      <td>{{ member.created_at }}</td>
+      <td class="text-center">{{ member.created_at }}</td>
+      <td class="text-center">
+        <button class="btn btn-primary btn-sm"
+          onclick="submit_data(
+            '{{ member.id }}',
+            '{{ member.name|escapejs }}',
+            '{{ member.email|escapejs }}',
+            '{{ member.phone_number|escapejs }}',
+            '{{ member.address|escapejs }}',
+            '{{ member.membership_date }}',
+            '{{ member.is_active }}',
+            '{{ member.created_at }}'
+          )">
+          <i class="bi bi-pencil-square"></i>
+        </button>
+      </td>
+      <td class="text-center">
+        <button class="btn btn-danger btn-sm">
+          <i class="bi bi-trash-fill"></i>
+        </button>
+      </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 </div>
 
-<!-- Pagination -->
 
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editMemberModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Member</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <input type="hidden" id="member_id">
+
+        <div class="mb-2">
+          <label>Name</label>
+          <input type="text" id="member_name" class="form-control">
+        </div>
+
+        <div class="mb-2">
+          <label>Email</label>
+          <input type="text" id="member_email" class="form-control">
+        </div>
+
+        <div class="mb-2">
+          <label>Phone</label>
+          <input type="text" id="member_phone" class="form-control">
+        </div>
+
+        <div class="mb-2">
+          <label>Address</label>
+          <input type="text" id="member_address" class="form-control">
+        </div>
+
+        <div class="mb-2">
+          <label>Membership Date</label>
+          <input type="date" id="member_membership_date" class="form-control">
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-success" onclick="save_member()">Save</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- Pagination -->
+<script>
+window.submit_data = function(id, name, email, phone, address, membership_date, is_active, created_at) {
+  // ========================================> 
+  console.log("ID               : ", id);
+  console.log("NAME             : ", name);
+  console.log("EMAIL            : ", email);
+  console.log("PHONE            : ", phone);
+  console.log("ADDRESS          : ", address);
+  console.log("MEMBERSHIP DATE  : ", membership_date);
+  console.log("ACTIVE           : ", is_active);
+  console.log("CREATED AT       : ", created_at);
+  // ========================================> 
+
+  document.getElementById("member_id").value = id;
+  document.getElementById("member_name").value = name;
+  document.getElementById("member_email").value = email;
+  document.getElementById("member_phone").value = phone;
+  document.getElementById("member_address").value = address;
+  document.getElementById("member_membership_date").value = membership_date;
+
+  const modalEl = document.getElementById('editMemberModal');
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+}
+
+
+window.save_member = async function() {
+  var id = document.getElementById("member_id").value;
+  var name = document.getElementById("member_name").value;
+  var email = document.getElementById("member_email").value;
+  var phone = document.getElementById("member_phone").value;
+  var address = document.getElementById("member_address").value;
+  var membership_date = document.getElementById("member_membership_date").value;
+
+  // ========================================> 
+  console.log("ID               : ", id);
+  console.log("NAME             : ", name);
+  console.log("EMAIL            : ", email);
+  console.log("PHONE            : ", phone);
+  console.log("ADDRESS          : ", address);
+  console.log("MEMBERSHIP DATE  : ", membership_date);
+  // ========================================> 
+
+
+  const formData = {
+    id,
+    name,
+    email,
+    phone,
+    address,
+    membership_date
+  };
+
+  try {
+    const response = await fetch("/update_member/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken
+      },
+      body: JSON.stringify(formData)
+    });
+    const data = await response.json();
+    if (data.status === "success") {
+      alert("Member updated successfully!");
+      const modalEl = document.getElementById('editMemberModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal.hide();
+      location.reload();
+    } else {
+      alert("Update failed!");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+
+
+
+
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+</script>
 
 {% endblock %}
