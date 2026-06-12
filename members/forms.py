@@ -1,5 +1,8 @@
 from django import forms
+from datetime import datetime, date
+from django.utils.timezone import now
 from .models import BookCategory, BookDetails
+from django.core.exceptions import ValidationError
 import datetime
 
 CURRENT_YEAR = datetime.datetime.now().year
@@ -25,8 +28,14 @@ class MemberFrom(forms.Form):
     email =forms.EmailField()
     phone_number = forms.CharField(max_length=25)
     address = forms.CharField(widget=forms.Textarea)
-    membership_date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={"type": "datetime-local"}))
+    membership_date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
     is_active = forms.BooleanField(required=False)
+
+    def clean_membership_date(self):
+        membership_date = self.cleaned_data.get("membership_date")
+        if membership_date < date.today():
+            raise ValidationError("Membership date cannot be in the past.")
+        return membership_date
 
 class BookCategoryForm(forms.Form):
     choice = forms.CharField(max_length=100)

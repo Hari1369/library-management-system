@@ -40,7 +40,12 @@
 
                 <div class="col-md-6">
                     <label class="lms-form-label">Membership Date</label>
-                    <input type="date" name="membership_date" class="form-control lms-form-control">
+                    <input type="date" name="membership_date" class="form-control lms-form-control" onclick="this.showPicker()" required>
+                        {% if form.membership_date.errors %}
+                            <small class="text-danger">
+                                {{ form.membership_date.errors.0 }}
+                            </small>
+                        {% endif %}
                 </div>
 
                 <div class="col-12">

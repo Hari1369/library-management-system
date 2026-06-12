@@ -13,7 +13,7 @@ from .forms import LoginForm, LibrarianFrom, BookCategoryForm, BookForm, MemberF
 from .decorators import role_required
 from django.contrib.auth.models import User
 from django.contrib import messages
-from datetime import datetime
+from datetime import datetime, date
 from django.db.models import F
 import json
 
@@ -291,6 +291,9 @@ def member_registration_page(request):
             membership_date = form.cleaned_data["membership_date"]
             is_active = form.cleaned_data["is_active"]
 
+            if membership_date < date.today():
+                return render(request, "member_registration/member_registration.html", {"form": form, "error": "Membership date cannot be in the past."})
+
             # ================================>
             print("NAME                 : ",  name)
             print("EMAIL                : ",  email)
@@ -370,7 +373,9 @@ def member_update_request(request):
         phone = data.get("phone")
         address = data.get("address")
         membership_date = data.get("membership_date")
-        
+
+        if membership_date < date.today():
+            return render(request, "member_registration/member_registration.html", {"form": form, "error": "Membership date cannot be in the past."})  
         # ================================>
         print("ID                   :", member_id)
         print("NAME                 :", name)
@@ -546,7 +551,7 @@ def book_registration_page(request):
 @login_required
 @role_required(["super_admin", "librarian"])
 def book_details_page(request):
-    book_details = BookDetails.objects.filter(is_acitve=True)
+    book_details = BookDetails.objects.filter(is_acitve=True).order_by("-updated_at")
     categories = BookCategory.objects.all()
     book_details_list = []
 
