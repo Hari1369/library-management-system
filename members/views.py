@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
-from .models import Librarian, Member, BookDetails, BookCategory, IssueMaintanence
+from .models import Librarian, Member, BookDetails, BookCategory, IssueMaintanence, FineMaintanence
 from .serializers import LibrarianSerializers, MemberSerializers, BookDetailsSerializers
 from .forms import LoginForm, LibrarianFrom, BookCategoryForm, BookForm, MemberFrom
 from .decorators import role_required
@@ -710,6 +710,8 @@ def book_delete_request(request):
     }, status=400)
 
 
+@login_required
+@role_required(["super_admin", "librarian"])
 def borrow_records(request):
     issuemaintenance = IssueMaintanence.objects.all().order_by('-created_at')
 
@@ -878,20 +880,73 @@ def borrow_records_register(request):
 
 
 
+@login_required
+@role_required(["super_admin", "librarian"])
 def borrow_returns(request):
-    return render(request, "returns/return.html")
+    total_books = BookDetails.objects.count()
+    total_members = Member.objects.count()
+    total_fine = FineMaintanence.objects.aggregate(total=Sum("fine_cost"))["total"]
+    overdue_books = FineMaintanence.objects.filter(is_return=False).count()
+    total_issued_books = (IssueMaintanence.objects.filter(status="issued").aggregate(total=Sum("books_number"))["total"] or 0)
+
+    # ================================>
+    print("TOTAL BOOKS          : ", total_books)
+    print("TOTAL MEMBERS        : ", total_members)
+    print("TOTAL FINE           : ", total_fine)
+    print("OVER DUE BOOKS       : ", overdue_books)
+    print("CURRENT ISSUED BOOKS : ", total_issued_books)
+    # ================================>
+    whole_data = {
+        'total_books' : total_books,
+        'total_members' : total_members,
+        'total_fine' : total_fine,
+        'overdue_books' : overdue_books,
+        'total_issued_books' : total_issued_books
+    }
+    return render(request, "returns/return.html", whole_data)
 
 
 
+from django.http import JsonResponse
+from django.db.models import Count
+from .models import BookDetails, IssueMaintanence
 
+def record_report(request):
+    top_books = (
+        IssueMaintanence.objects
+        .values(
+            "book__id",
+            "book__isbn",
+            "book__title",
+            "book__author",
+            "book__publication_year",
+            "book__total_copies",
+            "book__available_copies",
+            "book__category__choice",
+        )
+        .annotate(borrow_count=Count("book"))
+        .order_by("-borrow_count")[:10]
+    )
 
+    books_list = []
 
+    for b in top_books:
+        books_list.append({
+            "book_id": b["book__id"],
+            "isbn": b["book__isbn"],
+            "title": b["book__title"],
+            "author": b["book__author"],
+            "category": b["book__category__choice"],
+            "publication_year": b["book__publication_year"],
+            "total_copies": b["book__total_copies"],
+            "available_copies": b["book__available_copies"],
+            "borrow_count": b["borrow_count"],
+        })
 
-
-
-
-
-
+    return JsonResponse({
+        "status": "success",
+        "top_borrowed_books": books_list
+    })
 
 
 
