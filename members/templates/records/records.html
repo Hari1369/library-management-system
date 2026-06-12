@@ -8,6 +8,41 @@
     </span>
   </div>
 
+  <form method="GET" class="row g-2">
+    <div class="col-md-3">
+      <select name="member" class="form-select">
+        <option value="">All Members</option>
+        {% for m in members %}
+          <option value="{{ m.id }}" {% if request.GET.member == m.id|stringformat:"s" %}selected{% endif %}>
+            {{ m.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="book" class="form-select">
+        <option value="">All Books</option>
+        {% for b in books %}
+          <option value="{{ b.id }}" {% if request.GET.book == b.id|stringformat:"s" %}selected{% endif %}>
+            {{ b.title }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select">
+        <option value="">All Status</option>
+        <option value="issued" {% if request.GET.status == "issued" %}selected{% endif %}>Issued</option>
+        <option value="returned" {% if request.GET.status == "returned" %}selected{% endif %}>Returned</option>
+        <option value="overdue" {% if request.GET.status == "overdue" %}selected{% endif %}>Overdue</option>
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="submit" class="btn btn-primary w-50">Filter</button>
+      <a href="{% url 'records' %}" class="btn btn-secondary w-50">Reset</a>
+    </div>
+
+  </form>
 
 <!-- Search -->
 <div class="mb-3">

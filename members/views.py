@@ -701,7 +701,22 @@ def book_delete_request(request):
 
 def borrow_records(request):
     issuemaintenance = IssueMaintanence.objects.all().order_by('-created_at')
-    return render(request, "records/records.html", {"issuemaintenance": issuemaintenance})
+
+    member_id = request.GET.get('member')
+    book_id = request.GET.get('book')
+    status = request.GET.get('status')
+
+    if member_id and member_id != "":
+        issuemaintenance = issuemaintenance.filter(member_id=member_id)
+    if book_id and book_id != "":
+        issuemaintenance = issuemaintenance.filter(book_id=book_id)
+    if status and status != "":
+        issuemaintenance = issuemaintenance.filter(status=status)
+
+    members = Member.objects.all()
+    books = BookDetails.objects.all()
+
+    return render(request, "records/records.html", {"issuemaintenance": issuemaintenance, "members": members, "books": books,})
 
 
 @login_required
@@ -826,6 +841,29 @@ def borrow_records_register(request):
 
 def borrow_returns(request):
     return render(request, "returns/return.html")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
