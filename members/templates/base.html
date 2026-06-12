@@ -3,69 +3,99 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Library Management{% endblock %}</title>
+  <title>{% block title %}LibraryMS{% endblock %}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'library_systems/css/library.css' %}">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 </head>
+<script>
+  function tog() {
+    document.getElementById('sb').classList.toggle('hide');
+    document.getElementById('pg').classList.toggle('wide');
+  }
+  $(function () {
+      $('.select2').select2({
+          width: '100%',
+          minimumResultsForSearch: 0
+      });
+
+      // FORCE focus on search input immediately
+      $(document).on('select2:open', () => {
+          let searchField = document.querySelector('.select2-container--open .select2-search__field');
+          if (searchField) {
+              searchField.focus();
+          }
+      });
+  });
+</script>
 <body>
 
 {% block full_page %}
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-lms">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="">
-      <i class="bi bi-book-half me-2"></i>LibraryMS
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_page' %}"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'librarian_registration' %}"><i class="bi bi-person-vcard me-1"></i>Librarian Register</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'librarian_details' %}"><i class="bi bi-person-badge me-1"></i>Librarian Details</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'member_registration' %}"><i class="bi bi-person-plus me-1"></i>Add Member</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'member_details' %}"><i class="bi bi-people me-1"></i>Members</a></li>
-
-        <li class="nav-item"><a class="nav-link" href="{% url 'book_registration' %}"><i class="bi bi-journal-plus me-1"></i>Book Registration</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'book_details' %}"><i class="bi bi-book me-1"></i>Book Details</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'book_category_registration' %}"><i class="bi bi-tags me-1"></i>Book Categories</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'records_register' %}"><i class="bi bi-database me-1"></i>Borrow Records</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'records' %}"><i class="bi bi-arrow-left-right me-1"></i>Borrows</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'returns' %}"><i class="bi bi-arrow-return-left me-1"></i>Returns</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-1"></i>Logout</a></li>
-      </ul>
-    </div>
+<div class="topbar">
+  <button class="tog" onclick="tog()"><i class="bi bi-list"></i></button>
+  <a href="{% url 'dashboard_page' %}" class="brand"><i class="bi bi-book-half me-1"></i>LibraryMS</a>
+  <div class="right">
+    <a href="#"><i class="bi bi-person-circle me-1"></i>{{ request.user.username }}</a>
+    <a href="{% url 'logout' %}" style="color:#ffcdd2"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
   </div>
-</nav>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-{% if messages %}
-  <script>
-    {% for message in messages %}
-      alert("{{ message|escapejs }}");
-    {% endfor %}
-  </script>
-{% endif %}
-
-<!-- Main content -->
-<div class="page-wrapper">
-  {% block content %}
-  {% endblock %}
 </div>
 
+<nav class="sidebar" id="sb">
+  <div class="grp">Main</div>
+  <a href="{% url 'dashboard_page' %}" class="{% block a1 %}{% endblock %}"><i class="bi bi-speedometer2"></i>Dashboard</a>
+
+  <hr>
+  <div class="grp">Librarians</div>
+  <a href="{% url 'librarian_registration' %}" class="{% block a2 %}{% endblock %}"><i class="bi bi-person-vcard"></i>Register</a>
+  <a href="{% url 'librarian_details' %}"      class="{% block a3 %}{% endblock %}"><i class="bi bi-person-badge"></i>Details</a>
+
+  <hr>
+  <div class="grp">Members</div>
+  <a href="{% url 'member_registration' %}" class="{% block a4 %}{% endblock %}"><i class="bi bi-person-plus"></i>Add Member</a>
+  <a href="{% url 'member_details' %}"      class="{% block a5 %}{% endblock %}"><i class="bi bi-people"></i>Members</a>
+
+  <hr>
+  <div class="grp">Books</div>
+  <a href="{% url 'book_registration' %}"          class="{% block a6 %}{% endblock %}"><i class="bi bi-journal-plus"></i>Registration</a>
+  <a href="{% url 'book_details' %}"               class="{% block a7 %}{% endblock %}"><i class="bi bi-book"></i>Details</a>
+  <a href="{% url 'book_category_registration' %}" class="{% block a8 %}{% endblock %}"><i class="bi bi-tags"></i>Categories</a>
+
+  <hr>
+  <div class="grp">Borrow & Return</div>
+  <a href="{% url 'records_register' %}" class="{% block a9  %}{% endblock %}"><i class="bi bi-database"></i>Issue Book</a>
+  <a href="{% url 'records' %}"          class="{% block a10 %}{% endblock %}"><i class="bi bi-arrow-left-right"></i>Borrows</a>
+  <a href="{% url 'returns' %}"          class="{% block a11 %}{% endblock %}"><i class="bi bi-arrow-return-left"></i>Returns</a>
+
+
+</nav>
+
+<div class="page" id="pg">
+
+{% if messages %}
+  {% for message in messages %}
+    <script>
+      alert("{{ message|escapejs }}");
+    </script>
+  {% endfor %}
+{% endif %}
+
+  {% block content %}{% endblock %}
+</div>
 
 {% endblock %}
 
-<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function tog() {
+    document.getElementById('sb').classList.toggle('hide');
+    document.getElementById('pg').classList.toggle('wide');
+  }
+</script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>
