@@ -410,3 +410,17 @@ body {
 .mt-page { margin-top: 24px; }
 
 
+.status-issued {
+    color: orange;
+    font-weight: 600;
+}
+
+.status-returned {
+    color: green;
+    font-weight: 600;
+}
+
+.status-overdue {
+    color: red;
+    font-weight: 600;
+}

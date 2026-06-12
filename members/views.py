@@ -14,7 +14,7 @@ from .decorators import role_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from datetime import datetime, date
-from django.db.models import Sum
+from django.db.models import Sum, Count, Max, Sum
 from django.db.models import F
 import json
 
@@ -907,58 +907,75 @@ def borrow_returns(request):
 
 
 
-from django.http import JsonResponse
-from django.db.models import Count
-from .models import BookDetails, IssueMaintanence
+
 
 def record_report(request):
     top_books = (
-        IssueMaintanence.objects
-        .values(
-            "book__id",
-            "book__isbn",
-            "book__title",
-            "book__author",
-            "book__publication_year",
-            "book__total_copies",
-            "book__available_copies",
-            "book__category__choice",
+        IssueMaintanence.objects.values("book_id","book__isbn","book__title","book__author","book__publication_year","book__total_copies","book__available_copies","book__category__choice",)
+        .annotate(
+            borrow_count=Count("id"),
+            latest_issue=Max("issue_date"),
+            latest_return=Max("return_date"),
+            latest_due=Max("due_date"),
         )
-        .annotate(borrow_count=Count("book"))
         .order_by("-borrow_count")[:10]
     )
 
-    books_list = []
+    result = []
+    for book in top_books:
+        book_id = book["book_id"]
+        top_member_row = (
+            IssueMaintanence.objects
+            .filter(book_id=book_id)
+            .values("member__name")
+            .annotate(total=Count("id"))
+            .order_by("-total")
+            .first()
+        )
 
-    for b in top_books:
-        books_list.append({
-            "book_id": b["book__id"],
-            "isbn": b["book__isbn"],
-            "title": b["book__title"],
-            "author": b["book__author"],
-            "category": b["book__category__choice"],
-            "publication_year": b["book__publication_year"],
-            "total_copies": b["book__total_copies"],
-            "available_copies": b["book__available_copies"],
-            "borrow_count": b["borrow_count"],
+        latest_issue = (
+            IssueMaintanence.objects
+            .filter(book_id=book_id)
+            .select_related("librarian", "member")
+            .order_by("-issue_date")
+            .first()
+        )
+
+        fine_sum = (
+            FineMaintanence.objects
+            .filter(book_id=book_id, is_paid=True)
+            .aggregate(total=Sum("paid_cost"))
+        )["total"] or 0
+
+        result.append({
+"book_id": book_id,
+            "isbn": book["book__isbn"],
+            "title": book["book__title"],
+            "author": book["book__author"],
+            "category": book["book__category__choice"],
+            "publication_year": book["book__publication_year"],
+            "total_copies": book["book__total_copies"],
+            "available_copies": book["book__available_copies"],
+            "borrow_count": book["borrow_count"],
+
+            "top_member": top_member_row["member__name"] if top_member_row else None,
+
+            "librarian": (
+                f"{latest_issue.librarian.name} {latest_issue.librarian.surname}"
+                if latest_issue else None
+            ),
+
+            "latest_issue_date": latest_issue.issue_date.date().isoformat() if latest_issue and latest_issue.issue_date else None,
+            "latest_return_date": latest_issue.return_date.date().isoformat() if latest_issue and latest_issue.return_date else None,
+            "latest_due_date": latest_issue.due_date.date().isoformat() if latest_issue and latest_issue.due_date else None,
+
+            "total_fine_collected": fine_sum,
         })
 
     return JsonResponse({
         "status": "success",
-        "top_borrowed_books": books_list
+        "top_borrowed_books": result
     })
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

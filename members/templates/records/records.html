@@ -71,7 +71,20 @@
       <td>{{ record.member.name }}</td>
       <td>{{ record.librarian.name }} {{ record.librarian.surname }}</td>
       <td>{{ record.books_number }}</td>
-      <td>{{ record.status }}</td>
+      <td>
+        {% if record.status == "issued" %}
+          <span class="status-issued">{{ record.status }}</span>
+
+        {% elif record.status == "returned" %}
+          <span class="status-returned">{{ record.status }}</span>
+
+        {% elif record.status == "overdue" %}
+          <span class="status-overdue">{{ record.status }}</span>
+
+        {% else %}
+          <span>{{ record.status }}</span>
+        {% endif %}
+      </td>
       <td>{{ record.issue_date }}</td>
       <td>{{ record.due_date }}</td>
       <td>{{ record.created_at }}</td>
