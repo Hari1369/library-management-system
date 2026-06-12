@@ -51,6 +51,7 @@ class Member(models.Model):
     address = models.TextField()
     membership_date = models.DateField()
     is_active = models.BooleanField(default=True)
+    is_expired = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     class Meta:
@@ -81,11 +82,12 @@ class FineMaintanence(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE, null=True, blank=True)
     book = models.ForeignKey(BookDetails, on_delete=models.CASCADE)
     fine_cost = models.IntegerField()
-    paid_cost = models.IntegerField()
+    paid_cost = models.IntegerField(null=True)
+    overdue_date = models.DateField(null=True, blank=True)
     books_number = models.IntegerField(default=1)
     is_paid = models.BooleanField(default=False)
     is_return = models.BooleanField(default=False) 
-    paid_time = models.DateTimeField() 
+    paid_time = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     class Meta:

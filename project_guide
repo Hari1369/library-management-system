@@ -7,3 +7,46 @@
 3) python manage.py makemigrations members
 
 
+INSERT INTO issue_maintanence
+(issue_date, due_date, status, created_at, updated_at, book_id, librarian_id, member_id, return_date, books_number)
+VALUES
+('2026-06-10', '2026-06-20', 'issued', NOW(), NOW(), 1, 1, 1, NULL, 1);
+
+INSERT INTO issue_maintanence
+(issue_date, due_date, status, created_at, updated_at, book_id, librarian_id, member_id, return_date, books_number)
+VALUES
+('2026-05-01', '2026-05-10', 'overdue', NOW(), NOW(), 2, 1, 2, NULL, 1);
+
+INSERT INTO issue_maintanence
+(issue_date, due_date, status, created_at, updated_at, book_id, librarian_id, member_id, return_date, books_number)
+VALUES
+('2026-05-15', '2026-05-25', 'returned', NOW(), NOW(), 3, 1, 1, '2026-05-24', 2);
+
+INSERT INTO issue_maintanence
+(issue_date, due_date, status, created_at, updated_at, book_id, librarian_id, member_id, return_date, books_number)
+VALUES
+('2026-04-10', '2026-04-20', 'overdue', NOW(), NOW(), 1, 1, 2, NULL, 3);
+
+INSERT INTO issue_maintanence
+(issue_date, due_date, status, created_at, updated_at, book_id, librarian_id, member_id, return_date, books_number)
+VALUES
+('2026-06-12', '2026-06-22', 'issued', NOW(), NOW(), 2, 1, 1, NULL, 1);
+
+
+
+
+
+| Database Column | Inserted Value             | Meaning                                                     |
+| --------------- | -------------------------- | ----------------------------------------------------------- |
+| `fine_cost`     | `fine_amount`              | ✅ The calculated fine amount. Example: 33 days × ₹10 = ₹330 |
+| `created_at`    | `NOW()`                    | ✅ Current date & time when the fine record is created       |
+| `book_id`       | `maintanence_book_id`      | ✅ The book on which the fine is generated                   |
+| `librarian_id`  | `maintanence_librarian_id` | ✅ The librarian who issued the book                         |
+| `is_return`     | `FALSE`                    | ✅ Book is not returned yet                                  |
+| `member_id`     | `maintanence_member_id`    | ✅ The member who has to pay the fine                        |
+| `books_number`  | `maintanence_book_number`  | ✅ Number of books issued                                    |
+| `paid_cost`     | `0`                        | ✅ No amount has been paid yet                               |
+| `is_paid`       | `FALSE`                    | ✅ Fine is not paid yet                                      |
+| `paid_time`     | `NULL`                     | ✅ No payment has happened yet, so no payment date/time      |
+| `updated_at`    | `NOW()`                    | ⚠️ Current timestamp during insertion                       |
+| `overdue_date`  | `due_date`                 | ✅ The date after which the fine started accumulating        |

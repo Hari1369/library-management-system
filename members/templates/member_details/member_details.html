@@ -26,6 +26,7 @@
       <th class="text-center">Address</th>
       <th class="text-center">Membership Date</th>
       <th class="text-center">Active</th>
+      <th class="text-center">Expired</th>
       <th class="text-center">Registered At</th>
       <th class="text-center">Update</th>
       <th class="text-center">Delete</th>
@@ -45,6 +46,17 @@
           <i class="bi bi-check-circle-fill text-success text-center"></i>
         {% else %}
           <i class="bi bi-x-circle-fill text-danger text-center"></i>
+        {% endif %}
+      </td>
+      <td class="text-center">
+        {% if member.is_expired %}
+          <span class="badge bg-danger">
+            Expired
+          </span>
+        {% else %}
+          <span class="badge bg-success">
+            Active
+          </span>
         {% endif %}
       </td>
       <td class="text-center">{{ member.created_at }}</td>

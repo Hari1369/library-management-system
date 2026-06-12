@@ -1,2 +1,41 @@
 {% extends "base.html" %}
+
 {% block title %}Borrow Records{% endblock %}
+
+{% block content %}
+
+<div class="card">
+
+  <h2>Return Book</h2>
+
+  <table class="info-table">
+    <tr>
+      <td class="label">Book</td>
+      <td>Clean Code</td>
+    </tr>
+    <tr>
+      <td class="label">Member</td>
+      <td>Priya Shah</td>
+    </tr>
+    <tr>
+      <td class="label">Issue Date</td>
+      <td>28 May 2026</td>
+    </tr>
+    <tr>
+      <td class="label">Due Date</td>
+      <td>11 Jun 2026</td>
+    </tr>
+    <tr>
+      <td class="label">Fine (estimated)</td>
+      <td class="fine">₹30</td>
+    </tr>
+  </table>
+
+  <div class="actions">
+    <button class="btn confirm">Confirm Return</button>
+    <button class="btn cancel">Cancel</button>
+  </div>
+
+</div>
+
+{% endblock %}

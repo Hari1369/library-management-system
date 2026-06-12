@@ -340,6 +340,7 @@ def member_details_page(request):
         address = i.address.title()
         membership_date = i.membership_date.strftime("%d-%m-%Y") if i.membership_date else ""
         is_active = i.is_active
+        is_expired = i.is_expired
         created_at = i.created_at
 
         # ================================>
@@ -350,6 +351,7 @@ def member_details_page(request):
         print("ADDRESS          : ", address)
         print("MEMBERSHIP DATE  : ", membership_date)
         print("ACTIVE           : ", is_active)
+        print("EXPIRED          : ", is_expired)
         print("CREATED AT       : ", created_at)
         # ================================>
 
@@ -360,6 +362,7 @@ def member_details_page(request):
             "phone_number" : phone_number,
             "membership_date": membership_date,
             "is_active" : is_active,
+            "is_expired" : is_expired,
             "created_at" : created_at,
         })
     return render(request, "member_details/member_details.html",  {"members": members})
@@ -374,7 +377,9 @@ def member_update_request(request):
         phone = data.get("phone")
         address = data.get("address")
         membership_date = data.get("membership_date")
-
+        if membership_date:
+            membership_date = datetime.strptime(membership_date, "%Y-%m-%d").date()
+            
         if membership_date < date.today():
             return render(request, "member_registration/member_registration.html", {"form": form, "error": "Membership date cannot be in the past."})  
         # ================================>
@@ -504,7 +509,7 @@ def book_registration_page(request):
         if form.is_valid():
             title = form.cleaned_data['title'].title()
             author = form.cleaned_data['author'].title()
-            category = form.cleaned_data['category'].title()
+            category = form.cleaned_data['category']
             publication_year = form.cleaned_data['publication_year']
             total_copies = form.cleaned_data['total_copies']
             available_copies = total_copies
