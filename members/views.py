@@ -14,6 +14,7 @@ from .decorators import role_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from datetime import datetime, date
+from django.db.models import Sum
 from django.db.models import F
 import json
 
@@ -735,8 +736,12 @@ def borrow_records_register(request):
         book_id = request.POST.get("book_id")
         quantity = int(request.POST.get("quantity") or 0)
         status = request.POST.get("status")
-        issue_date = request.POST.get("issue_date")
-        due_date = request.POST.get("due_date")
+        issue_date = datetime.strptime(request.POST.get("issue_date"),"%Y-%m-%d").date()
+        due_date = datetime.strptime(request.POST.get("due_date"),"%Y-%m-%d").date()
+        
+        if issue_date < date.today():
+            messages.error(request, "Issue Date cannot be in the past!")
+            return redirect("records_register")
 
         if role == "super_admin":
             print("=================>  SUPERUSER")
@@ -755,13 +760,25 @@ def borrow_records_register(request):
             book_obj = BookDetails.objects.get(id=book_id)
             librarian_obj = Librarian.objects.filter(is_active=True).first()
 
+            if due_date > member_obj.membership_date:
+                messages.error(request, "Due date cannot exceed the member's membership expiry date!")
+                return redirect("records_register")
+
             if not librarian_obj:
                 messages.error(request, "No active librarian found.")
                 return redirect("records_register")
 
-            if quantity > 5:
-                messages.error(request, "You cannot issue more than 5 books at a time!")
+            borrowed_data = IssueMaintanence.objects.filter(member=member_obj,status="issued").aggregate(total_books=Sum("books_number"))
+
+            current_borrowed = borrowed_data["total_books"] or 0
+            if current_borrowed + quantity > 5:
+                remaining = 5 - current_borrowed
+                if remaining <= 0:
+                    messages.error(request,"You already borrowed the maximum limit of 5 books!")
+                else:
+                    messages.error(request, f"You can borrow only {remaining} more book(s)")
                 return redirect("records_register")
+
             
             if book_obj.available_copies < quantity:
                 messages.error(request, "Not enough books available!")
@@ -810,6 +827,18 @@ def borrow_records_register(request):
                 messages.error(request, "No active librarian found.")
                 return redirect("records_register")
 
+            borrowed_data = IssueMaintanence.objects.filter(member=member_obj,status="issued").aggregate(total_books=Sum("books_number"))
+
+            current_borrowed = borrowed_data["total_books"] or 0
+            if current_borrowed + quantity > 5:
+                remaining = 5 - current_borrowed
+                if remaining <= 0:
+                    messages.error(request,"You already borrowed the maximum limit of 5 books!")
+                else:
+                    messages.error(request, f"You can borrow only {remaining} more book(s)")
+                return redirect("records_register")
+
+            
             if quantity > 5:
                 messages.error(request, "You cannot issue more than 5 books at a time!")
                 return redirect("records_register")
