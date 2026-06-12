@@ -199,7 +199,7 @@ window.save_member = async function() {
 
   try {
     const response = await fetch("/update_member/", {
-      method: "POST",
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": csrftoken
@@ -237,7 +237,7 @@ window.del_data = async function(id, name, email, is_active) {
 
   try {
     const response = await fetch("/member_delete/", {
-      method: "POST",
+      method: "DELETE",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": csrftoken

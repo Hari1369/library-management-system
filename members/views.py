@@ -131,7 +131,7 @@ def librarian_registration_page(request):
 @login_required
 @role_required(["super_admin"])
 def librarian_details_page(request):
-    librarian = Librarian.objects.filter(is_shown=True)
+    librarian = Librarian.objects.filter(is_shown=True).order_by('-updated_at')
     user_list = []
     for user in librarian:
         id = user.id
@@ -173,7 +173,7 @@ def librarian_details_page(request):
 
 @csrf_exempt
 def librarian_update_request(request):
-    if request.method == "POST":
+    if request.method == "PUT":
         data = json.loads(request.body)
         print("DATA : ", data)
         username = data.get("username")
@@ -230,7 +230,7 @@ def librarian_update_request(request):
 
 @csrf_exempt
 def librarian_delete_request(request):
-    if request.method == "POST":
+    if request.method == "DELETE":
         data = json.loads(request.body)
         username = data.get("username")
         name = data.get("name").title()
@@ -369,7 +369,7 @@ def member_details_page(request):
 
 @csrf_exempt
 def member_update_request(request):
-    if request.method == "POST":
+    if request.method == "PUT":
         data = json.loads(request.body)
         member_id = data.get("id")
         name = data.get("name").title()
@@ -423,7 +423,7 @@ def member_update_request(request):
 
 @csrf_exempt
 def member_delete_request(request):
-    if request.method == "POST":
+    if request.method == "DELETE":
         data = json.loads(request.body)
         member_id = data.get("id")
         name = data.get("name").title()
