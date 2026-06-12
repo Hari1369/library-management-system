@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Borrow Records{% endblock %}
+
+{% block content %}
+  <div class="section-header mb-3">
+    <span class="section-title">
+      <i class="bi bi-arrow-left-right me-2"></i>Borrow Records
+    </span>
+  </div>
+  {% if success %}
+    <div class="alert alert-success">
+      {{ success }}
+    </div>
+  {% endif %}
+  {% if error %}
+    <div class="alert alert-danger">
+      {{ error }}
+    </div>
+  {% endif %}
+
+  <div class="d-flex justify-content-center">
+  <div class="lms-card w-100">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label class="form-label">Member</label>
+        <select name="member_id" class="form-select" required>
+          <option value="">-- Select Member --</option>
+          {% for m in member %}
+            <option value="{{ m.id }}">{{ m.name|title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Book</label>
+
+        <select id="bookSelect" name="book_id" class="form-select" required>
+            <option value="">Select Book</option>
+        </select>
+
+        <div id="copyBox" class="mt-2 p-2 border rounded fw-bold">
+            Available Copies:
+            <span id="availableCopies">0</span>
+        </div>
+      </div>
+      <div id="quantityBox" class="mt-3 p-3 border rounded d-none">
+        <label class="form-label fw-bold">Number of Books to Issue</label>
+        <input type="number" id="quantityInput" name="quantity" class="form-control" min="1">
+        <small id="qtyMsg" class="text-muted"></small>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select" required>
+          <option value="">-- Select Status --</option>
+          <option value="issued">Issued</option>
+          <option value="overdue">Overdue</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Issue Date</label>
+        <input type="date" name="issue_date" class="form-control" onclick="this.showPicker()" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Due Date</label>
+        <input type="date" name="due_date" class="form-control" onclick="this.showPicker()" required>
+      </div>
+
+      <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-lms-primary">
+              Save member
+          </button>
+          <a href="" class="btn btn-lms-outline">Cancel</a>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+    const books = JSON.parse('{{ books|escapejs }}');
+
+    const bookSelect = document.getElementById("bookSelect");
+    const availableSpan = document.getElementById("availableCopies");
+    const copyBox = document.getElementById("copyBox");
+
+    const quantityBox = document.getElementById("quantityBox");
+    const quantityInput = document.getElementById("quantityInput");
+    const qtyMsg = document.getElementById("qtyMsg");
+
+    let currentAvailable = 0;
+
+    books.forEach(book => {
+        const option = document.createElement("option");
+        option.value = book.id;
+        option.textContent = book.title;
+        option.dataset.copies = book.available_copies;
+        bookSelect.appendChild(option);
+    });
+
+    function updateStyle(copies) {
+        copyBox.classList.remove(
+            "text-danger", "text-warning", "text-success",
+            "border-danger", "border-warning", "border-success"
+        );
+        if (copies < 5) {
+            copyBox.classList.add("text-danger", "border-danger");
+        } else if (copies <= 10) {
+            copyBox.classList.add("text-warning", "border-warning");
+        } else {
+            copyBox.classList.add("text-success", "border-success");
+        }
+    }
+
+    bookSelect.addEventListener("change", function () {
+        const selectedOption = this.options[this.selectedIndex];
+        currentAvailable = parseInt(selectedOption.dataset.copies || 0);
+        availableSpan.textContent = currentAvailable;
+        updateStyle(currentAvailable);
+        quantityInput.value = "";
+
+        if (currentAvailable <= 5) {
+            alert("This book cannot be issued. Available copies are 5 or less!");
+            quantityBox.classList.add("d-none");
+            return;
+        }
+        quantityBox.classList.remove("d-none");
+        var maxAllowed = Math.min(5, currentAvailable);
+        quantityInput.max = maxAllowed;
+        qtyMsg.textContent = `You can issue maximum ${maxAllowed} copies (limit per member = 5)`;
+    });
+
+    quantityInput.addEventListener("input", function () {
+        let val = parseInt(this.value);
+        if (val > 5) {
+            alert("More than 5 books are not allowed per member.");
+            this.value = 5;
+        }
+        if (val > currentAvailable) {
+            alert("Not enough copies available.");
+            this.value = currentAvailable;
+        }
+    });
+</script>
+
+{% endblock %}

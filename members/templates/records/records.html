@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Borrow Records{% endblock %}
+
+{% block content %}
+  <div class="section-header mb-3">
+    <span class="section-title">
+      <i class="bi bi-arrow-left-right me-2"></i>Borrow Records
+    </span>
+  </div>
+
+
+<!-- Search -->
+<div class="mb-3">
+
+</div>
+<!-- Table -->
+<div class="lms-table">
+<table class="table mb-0">
+  <thead>
+    <tr>
+      <th>Book</th>
+      <th>Member</th>
+      <th>Librarian</th>
+      <th>Qty</th>
+      <th>Status</th>
+      <th>Issue Date</th>
+      <th>Due Date</th>
+      <th>Created At</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for record in issuemaintenance %}
+    <tr>
+      <td>{{ record.book.title }}</td>
+      <td>{{ record.member.name }}</td>
+      <td>{{ record.librarian.name }} {{ record.librarian.surname }}</td>
+      <td>{{ record.books_number }}</td>
+      <td>{{ record.status }}</td>
+      <td>{{ record.issue_date }}</td>
+      <td>{{ record.due_date }}</td>
+      <td>{{ record.created_at }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="8">No records found</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% endblock %}

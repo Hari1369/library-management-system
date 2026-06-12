@@ -7,13 +7,14 @@ from django.contrib.auth.decorators import login_required
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.http import JsonResponse
-from .models import Librarian, Member, BookDetails, BookCategory
+from .models import Librarian, Member, BookDetails, BookCategory, IssueMaintanence
 from .serializers import LibrarianSerializers, MemberSerializers, BookDetailsSerializers
 from .forms import LoginForm, LibrarianFrom, BookCategoryForm, BookForm, MemberFrom
 from .decorators import role_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from datetime import datetime
+from django.db.models import F
 import json
 
 
@@ -40,6 +41,7 @@ def login_page(request):
                     messages.error(request, "Account disabled.")
                     return render(request, "log_in/log_in.html", {"form": form})
                 if user.is_superuser and user.is_staff:
+                    request.session["superuser_id"] = user.id
                     request.session["role"] = "super_admin"
                 elif librarian:
                     request.session["librarian_id"] = librarian.id
@@ -72,11 +74,11 @@ def librarian_registration_page(request):
         if form.is_valid():
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
-            name = form.cleaned_data["name"]
-            surname = form.cleaned_data["surname"]
+            name = form.cleaned_data["name"].title()
+            surname = form.cleaned_data["surname"].title()
             email = form.cleaned_data["email"]
             phone_number = form.cleaned_data["phone_number"]
-            address = form.cleaned_data["address"]
+            address = form.cleaned_data["address"].title()
             is_active = form.cleaned_data["is_active"]
 
             # ================================>
@@ -134,8 +136,8 @@ def librarian_details_page(request):
         id = user.id
         username = user.username
         password = user.password
-        name = user.name
-        surname = user.surname
+        name = user.name.title()
+        surname = user.surname.title()
         email = user.email
         phone_number = user.phone_number
         address = user.address
@@ -175,11 +177,11 @@ def librarian_update_request(request):
         print("DATA : ", data)
         username = data.get("username")
         password = data.get("password")
-        name = data.get("name")
-        surname = data.get("surname")
+        name = data.get("name").title()
+        surname = data.get("surname").title()
         email = data.get("email")
         phone = data.get("phone")
-        address = data.get("address")
+        address = data.get("address").title()
 
         librarian = Librarian.objects.filter(username=username).first()
         user_1 = User.objects.filter(username=username).first()
@@ -230,7 +232,7 @@ def librarian_delete_request(request):
     if request.method == "POST":
         data = json.loads(request.body)
         username = data.get("username")
-        name = data.get("name")
+        name = data.get("name").title()
         email = data.get("email")
         is_active = str(data.get("is_active")).lower() == "true"
 
@@ -282,10 +284,10 @@ def member_registration_page(request):
     if request.method == "POST":
         form = MemberFrom(request.POST)
         if form.is_valid():
-            name = form.cleaned_data["name"]
+            name = form.cleaned_data["name"].title()
             email = form.cleaned_data["email"]
             phone_number = form.cleaned_data["phone_number"]
-            address = form.cleaned_data["address"]
+            address = form.cleaned_data["address"].title()
             membership_date = form.cleaned_data["membership_date"]
             is_active = form.cleaned_data["is_active"]
 
@@ -328,10 +330,10 @@ def member_details_page(request):
     member_list = []
     for i in members:
         id = i.id
-        name = i.name
+        name = i.name.title()
         email = i.email
         phone_number = i.phone_number
-        address = i.address
+        address = i.address.title()
         membership_date = i.membership_date.strftime("%d-%m-%Y") if i.membership_date else ""
         is_active = i.is_active
         created_at = i.created_at
@@ -363,7 +365,7 @@ def member_update_request(request):
     if request.method == "POST":
         data = json.loads(request.body)
         member_id = data.get("id")
-        name = data.get("name")
+        name = data.get("name").title()
         email = data.get("email")
         phone = data.get("phone")
         address = data.get("address")
@@ -413,7 +415,7 @@ def member_delete_request(request):
     if request.method == "POST":
         data = json.loads(request.body)
         member_id = data.get("id")
-        name = data.get("name")
+        name = data.get("name").title()
         is_active = data.get("is_active")
         is_active = True if str(is_active).lower() == "true" else False
 
@@ -496,7 +498,7 @@ def book_registration_page(request):
         if form.is_valid():
             title = form.cleaned_data['title'].title()
             author = form.cleaned_data['author'].title()
-            category = form.cleaned_data['category']
+            category = form.cleaned_data['category'].title()
             publication_year = form.cleaned_data['publication_year']
             total_copies = form.cleaned_data['total_copies']
             available_copies = total_copies
@@ -550,8 +552,8 @@ def book_details_page(request):
 
     for book in book_details:
         isbn = book.isbn
-        title = book.title
-        author = book.author
+        title = book.title.title()
+        author = book.author.title()
         publication_year = book.publication_year
         total_copies = book.total_copies
         available_copies = book.available_copies
@@ -695,6 +697,145 @@ def book_delete_request(request):
         "status": "error",
         "message": "Error Something Went Wrong"
     }, status=400)
+
+
+def borrow_records(request):
+    issuemaintenance = IssueMaintanence.objects.all().order_by('-created_at')
+    return render(request, "records/records.html", {"issuemaintenance": issuemaintenance})
+
+
+@login_required
+@role_required(["super_admin", "librarian"])
+def borrow_records_register(request):
+    member = Member.objects.values("id", "name").order_by("name")
+    books = BookDetails.objects.values("id", "title", "available_copies").order_by("title")
+    if request.method == "POST":
+        role = request.session.get("role")
+        member_id = request.POST.get("member_id")
+        book_id = request.POST.get("book_id")
+        quantity = int(request.POST.get("quantity") or 0)
+        status = request.POST.get("status")
+        issue_date = request.POST.get("issue_date")
+        due_date = request.POST.get("due_date")
+
+        if role == "super_admin":
+            print("=================>  SUPERUSER")
+            user_id = request.session.get("superuser_id")
+            # ================================>
+            print("SuperUser ID: ", user_id)
+            print("Member ID:", member_id)
+            print("Book ID:", book_id)
+            print("Quantity ID:", quantity)
+            print("Status:", status)
+            print("Issue Date:", issue_date)
+            print("Due Date:", due_date)
+            # ================================>
+
+            member_obj = Member.objects.get(id=member_id)
+            book_obj = BookDetails.objects.get(id=book_id)
+            librarian_obj = Librarian.objects.filter(is_active=True).first()
+
+            if not librarian_obj:
+                messages.error(request, "No active librarian found.")
+                return redirect("records_register")
+
+            if quantity > 5:
+                messages.error(request, "You cannot issue more than 5 books at a time!")
+                return redirect("records_register")
+            
+            if book_obj.available_copies < quantity:
+                messages.error(request, "Not enough books available!")
+                return redirect("records_register")
+
+            rows_updated = BookDetails.objects.filter(id=book_id).update(
+                available_copies=F('available_copies') - quantity
+            )
+
+            if rows_updated == 1:
+                IssueMaintanence.objects.create(
+                    librarian=librarian_obj,
+                    member=member_obj,
+                    book=book_obj,
+                    status=status,
+                    issue_date=issue_date,
+                    due_date=due_date,
+                    books_number=quantity
+                )
+                messages.success(request, "Book issued successfully!")
+                return redirect("records_register")
+            else:
+                print("No record updated (book not found)")
+                return redirect("records_register")
+
+            messages.success(request, "Borrow record saved successfully!")
+            return redirect("records_register")
+        else:
+            print("=================> LIBRARIAN")
+            librarian_id = request.session.get("librarian_id")
+            # ================================>
+            print("Librarian ID: ", librarian_id)
+            print("Member ID:", member_id)
+            print("Book ID:", book_id)
+            print("Quantity ID:", quantity)
+            print("Status:", status)
+            print("Issue Date:", issue_date)
+            print("Due Date:", due_date)
+            # ================================>
+
+            member_obj = Member.objects.get(id=member_id)
+            book_obj = BookDetails.objects.get(id=book_id)
+            librarian_obj = Librarian.objects.get(id=librarian_id)
+
+            if not librarian_obj:
+                messages.error(request, "No active librarian found.")
+                return redirect("records_register")
+
+            if quantity > 5:
+                messages.error(request, "You cannot issue more than 5 books at a time!")
+                return redirect("records_register")
+            
+            if book_obj.available_copies < quantity:
+                messages.error(request, "Not enough books available!")
+                return redirect("records_register")
+
+            rows_updated = BookDetails.objects.filter(id=book_id).update(
+                available_copies=F('available_copies') - quantity
+            )
+
+            if rows_updated == 1:
+                IssueMaintanence.objects.create(
+                    librarian=librarian_obj,
+                    member=member_obj,
+                    book=book_obj,
+                    status=status,
+                    issue_date=issue_date,
+                    due_date=due_date,
+                    books_number=quantity
+                )
+                messages.success(request, "Book issued successfully!")
+                return redirect("records_register")
+            else:
+                print("No record updated (book not found)")
+                return redirect("records_register")
+            messages.success(request, "Borrow record saved successfully!")
+            return redirect("records_register")
+
+    return render(request, "records_register/records_register.html", {"member": member, "books": json.dumps(list(books))})
+
+
+
+def borrow_returns(request):
+    return render(request, "returns/return.html")
+
+
+
+
+
+
+
+
+
+
 
 
 

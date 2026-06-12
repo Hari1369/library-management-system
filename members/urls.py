@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import login_page, logout_page, dashboard_page, librarian_registration_page, member_registration_page, book_registration_page, book_category_registration_page, book_details_page, member_details_page, librarian_details_page, member_update_request, librarian_update_request, book_update_request, member_delete_request, librarian_delete_request, book_delete_request, member_api, books_api
+from .views import login_page, logout_page, dashboard_page, librarian_registration_page, member_registration_page, book_registration_page, book_category_registration_page, book_details_page, member_details_page, librarian_details_page, member_update_request, librarian_update_request, book_update_request, member_delete_request, librarian_delete_request, book_delete_request, member_api, books_api, borrow_records, borrow_returns, borrow_records_register
 
 urlpatterns = [
     path("", login_page, name="log_in"),
@@ -27,7 +27,21 @@ urlpatterns = [
     path("member_registration/", member_registration_page, name="member_registration"),
     path("update_member/", member_update_request, name="update_member"),
     path("member_delete/", member_delete_request, name="member_delete"),
+
+
+
+
+    path("records/", borrow_records, name="records"),
+    path("records_register/", borrow_records_register, name="records_register"),
+
+
+    path("returns/", borrow_returns, name="returns"),
+
+
     
+
+
+
 
 
     # ========================================> REST APIs <========================================
