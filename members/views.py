@@ -74,14 +74,16 @@ def dashboard_upper(request):
     overdue_books = FineMaintanence.objects.filter(is_return=False).count()
     total_issued_books = (IssueMaintanence.objects.filter(status="issued").aggregate(total=Sum("books_number"))["total"] or 0)
     issued_today = IssueMaintanence.objects.filter(status="issued", created_at__date=today).count()
-    # # ================================>
-    # print("TOTAL BOOKS          : ", total_books)
-    # print("TOTAL MEMBERS        : ", total_members)
-    # print("TOTAL FINE           : ", total_fine)
-    # print("OVER DUE BOOKS       : ", overdue_books)
-    # print("CURRENT ISSUED BOOKS : ", total_issued_books)
-    # print("ISSUED TODAY         : ", issued_today)
-    # # ================================>
+
+    # ================================>
+    print("TOTAL BOOKS          : ", total_books)
+    print("TOTAL MEMBERS        : ", total_members)
+    print("TOTAL FINE           : ", total_fine)
+    print("OVER DUE BOOKS       : ", overdue_books)
+    print("CURRENT ISSUED BOOKS : ", total_issued_books)
+    print("ISSUED TODAY         : ", issued_today)
+    # ================================>
+
     data = {
         "total_books": total_books,
         "total_members": total_members,
@@ -93,39 +95,156 @@ def dashboard_upper(request):
     return JsonResponse(data)
 
 
-
 def dashboard_book_data(request):
-    print("TRIGGER")
-    book_data_1 = (IssueMaintanence.objects.filter(issue_date__date=today).values("book__title","librarian__name","member__name","issue_date",).annotate(total_issued=Count("id")).order_by("-total_issued")[:5])
-    print("book DATA", book_data_1)
+    print("TRIGGER 1 ")
+    book_data_1 = (IssueMaintanence.objects.filter(issue_date__date=today).values("book__title","librarian__name","member__name","issue_date","member__is_active","member__created_at",).annotate(total_issued=Count("id")).order_by("-total_issued")[:5])
     book_data_list = []
     for item in book_data_1:
-        book_title = item["book__title"],
-        librarian_name = item["librarian__name"],
-        member_name = item["member__name"],
-        issue_date = item["issue_date"],
+        book_title = item["book__title"]
+        librarian_name = item["librarian__name"]
+        member_name = item["member__name"]
+        issue_date = item["issue_date"]
         total_issued = item["total_issued"]
+        member_is_active = item["member__is_active"]
+        issue_date_formatted = issue_date.strftime("%d-%m-%Y")
+        created_at = item["member__created_at"]
+        created_at_formatted = created_at.strftime("%d-%m-%Y %H:%M:%S")
 
         # ================================>
         print("BOOK TITLE       : ", book_title)
         print("LIBRARIAN        : ", librarian_name)
         print("MEMBER NAME      : ", member_name)
-        print("ISSUED DATE      : ", issue_date)
+        print("MEMBER IS ACTIVE : ", member_is_active)
+        print("ISSUED DATE      : ", issue_date_formatted)
         print("TOTAL ISSUED     : ", total_issued)
+        print("REGISTERED AT     : ", created_at_formatted)
         # ================================>
 
         book_data_list.append({
             "book_title": book_title,
             "librarian_name": librarian_name,
             "member_name": member_name,
-            "issue_date": issue_date,
+            "issue_date": issue_date_formatted,
             "total_issued": total_issued,
+            "member_is_active": member_is_active,
+            "registered_at": created_at_formatted,
         })
 
     return JsonResponse({
         "status": "success",
         "book_data_list": book_data_list
     })
+
+def dashboard_lowest_books(request):
+    print("TRIGGER 2 ")
+    all_books = BookDetails.objects.all()
+    book_less_list = []
+    low_stock_books = []
+    for book in all_books:
+        if book.available_copies < 5:
+            low_stock_books.append(book)
+
+    issues = IssueMaintanence.objects.filter(book__in=low_stock_books)
+    data = issues.values("book__title","book__author","book__category__choice","book__total_copies","book__available_copies","member__name","member__is_active",)
+
+    for item in data:
+        book_title = item['book__title']
+        book_author = item['book__author']
+        category_choice = item['book__category__choice']
+        total_copies = item['book__total_copies']
+        available_copies = item['book__available_copies']
+        member_name = item['member__name']
+        member_isactive = item['member__is_active']
+
+        # ================================>
+        print("BOOK_TITLE       : ", book_title)
+        print("BOOK AUTHOR      : ", book_author)
+        print("CATEGORY CHOICE  : ", category_choice)
+        print("TOTAL COPIES     : ", total_copies)
+        print("AVAILABLE COPIES : ", available_copies)
+        print("MEMBER NAME      : ", member_name)
+        print("MEMBER ISACTIVE  : ", member_isactive)
+        # ================================>
+
+        book_less_list.append({
+            "book_title": book_title,
+            "book_author": book_author,
+            "category_choice": category_choice,
+            "total_copies": total_copies,
+            "available_copies": available_copies,
+            "member_name": member_name,
+            "member_isactive": member_isactive,
+        })
+
+    return JsonResponse({"status": "ok", "book_less_list" : book_less_list})
+
+def dashboard_total_activemember(request):
+    print("TRIGGER 3")
+    total_active_memebrs = Member.objects.filter(is_active=True, is_expired=False)
+    activemembers = []
+    for member in total_active_members:
+        registered_at =  member.created_at.strftime("%d-%m-%Y %H:%M:%S")
+        name = member.name
+        email = member.email
+        membership_date = member.membership_date.strftime("%d-%m-%Y")
+        is_active = member.is_active
+        is_expired = member.is_expired
+
+        # ================================>
+        print("REGISTERED AT    : ", registered_at)
+        print("NAME             : ", name)
+        print("EMAIL            : ", email)
+        print("MEMBERSHIP DATE  : ", membership_date)
+        print("IS_ACTIVE        : ", is_active)
+        print("IS_EXPIRED       : ", is_expired)
+        # ================================>
+        
+        activemembers.append({
+            "registered_at": registered_at,
+            "name": name,
+            "email": email,
+            "membership_date": membership_date,
+            "is_active": is_active,
+            "is_expired": is_expired,
+        })
+
+    return JsonResponse({"status": "ok", "activemembers" : activemembers})
+
+
+def dashboard_total_inactivemember(request):
+    print("TRIGGER 3")
+    total_inactive_memebrs = Member.objects.filter(is_active=False, is_expired=True)
+    is_activemembers = []
+    for member in total_inactive_memebrs:
+        registered_at = member.created_at.strftime("%d-%m-%Y %H:%M:%S")
+        name = member.name
+        email = member.email
+        membership_date =member.membership_date.strftime("%d-%m-%Y")
+        is_active = member.is_active
+        is_expired = member.is_expired
+
+        # ================================>
+        print("REGISTERED AT    : ", registered_at)
+        print("NAME             : ", name)
+        print("EMAIL            : ", email)
+        print("MEMBERSHIP DATE  : ", membership_date)
+        print("IS_ACTIVE        : ", is_active)
+        print("IS_EXPIRED       : ", is_expired)
+        # ================================>
+        
+        is_activemembers.append({
+            "registered_at": registered_at,
+            "name": name,
+            "email": email,
+            "membership_date": membership_date,
+            "is_active": is_active,
+            "is_expired": is_expired,
+        })
+
+    return JsonResponse({"status": "ok", "is_activemembers" : is_activemembers})
+
+
+
 
 
 @login_required
