@@ -16,8 +16,9 @@ from django.contrib import messages
 from datetime import datetime, date
 from django.db.models import Sum, Count, Max, Sum
 from django.db.models import F
+from django.utils import timezone
 import json
-
+today = timezone.now().date()
 
 
 def login_page(request):
@@ -66,6 +67,32 @@ def logout_page(request):
 def dashboard_page(request):
     return render(request, "librarians_dashboard/librarians_dashboard.html")
 
+def dashboard_upper(request):
+    total_books = BookDetails.objects.count()
+    total_members = Member.objects.count()
+    total_fine = FineMaintanence.objects.aggregate(total=Sum("fine_cost"))["total"]
+    overdue_books = FineMaintanence.objects.filter(is_return=False).count()
+    total_issued_books = (IssueMaintanence.objects.filter(status="issued").aggregate(total=Sum("books_number"))["total"] or 0)
+    issued_today = IssueMaintanence.objects.filter(status="issued", created_at__date=today).count()
+    # ================================>
+    print("TOTAL BOOKS          : ", total_books)
+    print("TOTAL MEMBERS        : ", total_members)
+    print("TOTAL FINE           : ", total_fine)
+    print("OVER DUE BOOKS       : ", overdue_books)
+    print("CURRENT ISSUED BOOKS : ", total_issued_books)
+    print("ISSUED TODAY         : ", issued_today)
+    # ================================>
+    data = {
+        "total_books": total_books,
+        "total_members": total_members,
+        "total_fine": total_fine,
+        "overdue_books": overdue_books,
+        "total_issued_books": total_issued_books,
+        "issued_today": issued_today
+    }
+
+    return JsonResponse(data)
+
 @login_required
 @role_required(["super_admin"])
 def librarian_registration_page(request):
@@ -94,7 +121,7 @@ def librarian_registration_page(request):
             # ================================>
 
             if User.objects.filter(username=username).exists():
-                return HttpResponse("Username already exists", status=409)
+                return render(request,"librarians_registration/librarians_registration.html",{"form": form,"error": "Username already exists!"})
                 if Librarian.objects.filter(username=username).exists():
                     return HttpResponse("Username already exists Please do active again", status=409)
             try:
@@ -188,33 +215,51 @@ def librarian_update_request(request):
         user_1 = User.objects.filter(username=username).first()
 
         if librarian:
-            if librarian.password != password:
-                if user_1:
-                    user_1.is_active = False
-                    user_1.save()
-                    librarian.password = password
+            if (
+                librarian.password == password and
+                librarian.name == name and
+                librarian.surname == surname and
+                librarian.email == email and
+                librarian.phone_number == phone and
+                librarian.address == address
+            ):
+                return JsonResponse({
+                    "status": "error",
+                    "error": "No Change Found "
+                }, status=405)  
+            else:
+                if librarian.password != password:
+                    if user_1:
+                        user_1.is_active = False
+                        user_1.save()
+                        librarian.password = password
+                        librarian.name = name
+                        librarian.surname = surname
+                        librarian.email = email
+                        librarian.phone_number = phone
+                        librarian.address = address
+                        librarian.is_active = False
+                        librarian.save()
+                else:
                     librarian.name = name
                     librarian.surname = surname
                     librarian.email = email
-                    librarian.phone = phone
+                    librarian.phone_number = phone
                     librarian.address = address
-                    librarian.is_active = False
                     librarian.save()
-            else:
-                librarian.name = name
-                librarian.surname = surname
-                librarian.email = email
-                librarian.phone = phone
-                librarian.address = address
-                librarian.save()
         else:
+            if (librarian.password == password and  librarian.name == name and librarian.surname == surname and librarian.email == email and librarian.phone_number == phone and librarian.address == address):
+                return JsonResponse({
+                    "status": "error",
+                    "error": "No Change Found"
+                }, status=405)  
             Librarian.objects.create(
                 username=username,
                 password=password,
                 name=name,
                 surname=surname,
                 email=email,
-                phone=phone,
+                phone_number=phone,
                 address=address
             )
 
@@ -227,6 +272,7 @@ def librarian_update_request(request):
         "status": "error",
         "message": "Something Went Wrong"
     }, status=405)
+
 
 @csrf_exempt
 def librarian_delete_request(request):
@@ -293,7 +339,8 @@ def member_registration_page(request):
             is_active = form.cleaned_data["is_active"]
 
             if membership_date < date.today():
-                return render(request, "member_registration/member_registration.html", {"form": form, "error": "Membership date cannot be in the past."})
+                messages.error(request, "Membership date cannot be in the past.")
+                return redirect("member_registration")
 
             # ================================>
             print("NAME                 : ",  name)
@@ -305,7 +352,9 @@ def member_registration_page(request):
             # ================================>
 
             if Member.objects.filter(name=name).exists():
-                return HttpResponse("Name already exists", status=409)
+                messages.error(request, "Name already exists.")
+                return redirect("member_registration")
+
             
             try:
                 with transaction.atomic():
@@ -317,12 +366,12 @@ def member_registration_page(request):
                         membership_date=membership_date,
                         is_active=is_active,
                     )                 
-                    return render(request, "member_registration/member_registration.html", {"form": form, "success": f"Member {member_insert.name} inserted successfully!"})
+                messages.success(request, f"Member {name} inserted successfully!")
+                return redirect("member_registration")
+
             except IntegrityError:
-                return render(request, "member_registration/member_registration.html", {"form": form,"error": "Database error occurred. Try again."})
-        else:
-            print("something went wrong!")
-            print(form.errors)
+                messages.error(request, "Database error occurred. Try again.")
+                return redirect("member_registration")
     else:
         form = MemberFrom()
     return render(request, "member_registration/member_registration.html", {"form" : form})
@@ -379,7 +428,14 @@ def member_update_request(request):
         membership_date = data.get("membership_date")
         if membership_date:
             membership_date = datetime.strptime(membership_date, "%Y-%m-%d").date()
-            
+
+        if not member_id:
+            return JsonResponse({
+                "status": "error",
+                "message": "Member ID is required"
+            }, status=400)   
+
+
         if membership_date < date.today():
             return render(request, "member_registration/member_registration.html", {"form": form, "error": "Membership date cannot be in the past."})  
         # ================================>
@@ -393,6 +449,8 @@ def member_update_request(request):
 
         try:
             member = Member.objects.get(id=member_id)
+            if (member.name == name and member.email == email and member.phone_number == phone and member.address == address and member.membership_date == membership_date):
+                return JsonResponse({"status": "error","message": "No changes detected. Data already up to date."})
 
             member.name = name
             member.email = email
@@ -525,10 +583,10 @@ def book_registration_page(request):
             # ================================>
 
             if BookDetails.objects.filter(title=title).exists():
-                return render(request, "book_registration/add_books.html", {
-                    "form": form,
-                    "error": "Book is already exists"
-                })
+                return JsonResponse({
+                    "status": "error",
+                    "message": "Book is already exists"
+                }, status=404)
 
             isbn_last = BookDetails.objects.order_by("-id").first()
             if isbn_last is None:
@@ -549,7 +607,8 @@ def book_registration_page(request):
                         available_copies=available_copies,
                         category_id=category_id,
                     )
-                    return render(request, "book_registration/add_books.html", {"form": form, "success": f"Book {book_insert.isbn} with Author {book_insert.author} Added Successfully!"})
+                    messages.success(request, f"Book {book_insert.isbn} with Author {book_insert.author} Added Successfully!")
+                    return redirect("book_registration")
             except IntegrityError:
                 return render(request, "book_registration/add_books.html", {"form": form,"error": "Database error occurred. Try again."})
     return render(request, "book_registration/add_books.html", {"form": form})
@@ -619,6 +678,11 @@ def book_update_request(request):
 
         try:
             book = BookDetails.objects.get(isbn=isbn)
+            if (title == book.title and author == book.author and str(publication_year) == str(book.publication_year) and add_copies == 0 and (category is None or int(category) == (book.category.id if book.category else None))):
+                return JsonResponse({
+                    "status": "error",
+                    "message": "No changes detected. Please update something before saving."
+                })
 
             if data.get("title"):
                 book.title = data.get("title")
@@ -907,48 +971,50 @@ def borrow_returns(request):
 
 
 
-
-
 def record_report(request):
-    top_books = (
-        IssueMaintanence.objects.values("book_id","book__isbn","book__title","book__author","book__publication_year","book__total_copies","book__available_copies","book__category__choice",)
-        .annotate(
+    top_books = (IssueMaintanence.objects.values(
+            "book_id",
+            "book__isbn",
+            "book__title",
+            "book__author",
+            "book__publication_year",
+            "book__total_copies",
+            "book__available_copies",
+            "book__category__choice",
+        ).annotate(
             borrow_count=Count("id"),
             latest_issue=Max("issue_date"),
             latest_return=Max("return_date"),
             latest_due=Max("due_date"),
-        )
-        .order_by("-borrow_count")[:10]
-    )
-
+        ).order_by("-borrow_count")[:10])
     result = []
     for book in top_books:
         book_id = book["book_id"]
-        top_member_row = (
-            IssueMaintanence.objects
-            .filter(book_id=book_id)
-            .values("member__name")
-            .annotate(total=Count("id"))
-            .order_by("-total")
-            .first()
-        )
 
-        latest_issue = (
-            IssueMaintanence.objects
-            .filter(book_id=book_id)
-            .select_related("librarian", "member")
-            .order_by("-issue_date")
-            .first()
-        )
+        top_member_row = (IssueMaintanence.objects.filter(book_id=book_id).values("member__name").annotate(total=Count("id")).order_by("-total").first())
+        if top_member_row:
+            top_member = top_member_row["member__name"]
+        else:
+            top_member = None
+        latest_issue = (IssueMaintanence.objects.filter(book_id=book_id).select_related("librarian", "member").order_by("-issue_date").first())
+        fine_sum = (FineMaintanence.objects.filter(book_id=book_id, is_paid=True).aggregate(total=Sum("paid_cost")))["total"] or 0
 
-        fine_sum = (
-            FineMaintanence.objects
-            .filter(book_id=book_id, is_paid=True)
-            .aggregate(total=Sum("paid_cost"))
-        )["total"] or 0
+        if latest_issue and latest_issue.librarian:
+            librarian = f"{latest_issue.librarian.name} {latest_issue.librarian.surname}"
+        else:
+            librarian = None
+
+        if latest_issue:
+            latest_issue_date = latest_issue.issue_date.date().isoformat() if latest_issue.issue_date else None
+            latest_return_date = latest_issue.return_date.date().isoformat() if latest_issue.return_date else None
+            latest_due_date = latest_issue.due_date.date().isoformat() if latest_issue.due_date else None
+        else:
+            latest_issue_date = None
+            latest_return_date = None
+            latest_due_date = None
 
         result.append({
-"book_id": book_id,
+            "book_id": book_id,
             "isbn": book["book__isbn"],
             "title": book["book__title"],
             "author": book["book__author"],
@@ -957,18 +1023,11 @@ def record_report(request):
             "total_copies": book["book__total_copies"],
             "available_copies": book["book__available_copies"],
             "borrow_count": book["borrow_count"],
-
-            "top_member": top_member_row["member__name"] if top_member_row else None,
-
-            "librarian": (
-                f"{latest_issue.librarian.name} {latest_issue.librarian.surname}"
-                if latest_issue else None
-            ),
-
-            "latest_issue_date": latest_issue.issue_date.date().isoformat() if latest_issue and latest_issue.issue_date else None,
-            "latest_return_date": latest_issue.return_date.date().isoformat() if latest_issue and latest_issue.return_date else None,
-            "latest_due_date": latest_issue.due_date.date().isoformat() if latest_issue and latest_issue.due_date else None,
-
+            "top_member": top_member,
+            "librarian": librarian,
+            "latest_issue_date": latest_issue_date,
+            "latest_return_date": latest_return_date,
+            "latest_due_date": latest_due_date,
             "total_fine_collected": fine_sum,
         })
 
@@ -976,10 +1035,6 @@ def record_report(request):
         "status": "success",
         "top_borrowed_books": result
     })
-
-
-
-
 
 
 

@@ -184,51 +184,78 @@ window.save_book = async function() {
   var add_copies = document.getElementById("book_add_copies").value;
   var total_copies = document.getElementById("book_total_copies").value;
   var available_copies = document.getElementById("book_available_copies").value;
+  if (!isbn) {
+      alert("ISBN is required");
+  } 
+  else if (!title) {
+      alert("Book title is required");
+  } 
+  else if (!author) {
+      alert("Author is required");
+  } 
+  else if (!category) {
+      alert("Category is required");
+  } 
+  else if (!publication_year) {
+      alert("Publication year is required");
+  } 
+  else if (!add_copies) {
+      alert("Add copies is required");
+  } 
+  else if (!total_copies) {
+      alert("Total copies is required");
+  } 
+  else if (!available_copies) {
+      alert("Available copies is required");
+  } 
+  else {
 
-  // ========================================> 
-  console.log("ISBN               : ", isbn);
-  console.log("TITLE              : ", title);
-  console.log("AUTHOR             : ", author);
-  console.log("CATEGORY           : ", category);
-  console.log("YEAR               : ", publication_year);
-  console.log("ADD COPIES         : ", add_copies);
-  console.log("TOTAL COPIES       : ", total_copies);
-  console.log("AVAILABLE COPIES   : ", available_copies);
-  // ========================================> 
+    // ========================================> 
+    console.log("ISBN               : ", isbn);
+    console.log("TITLE              : ", title);
+    console.log("AUTHOR             : ", author);
+    console.log("CATEGORY           : ", category);
+    console.log("YEAR               : ", publication_year);
+    console.log("ADD COPIES         : ", add_copies);
+    console.log("TOTAL COPIES       : ", total_copies);
+    console.log("AVAILABLE COPIES   : ", available_copies);
+    // ========================================> 
 
-  const formData = {
-    isbn,
-    title,
-    author,
-    category,
-    publication_year,
-    add_copies,
-    total_copies,
-    available_copies
-  }
-
-  try {
-    const response = await fetch("/update_book/", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrftoken
-      },
-      body: JSON.stringify(formData)
-    });
-    const data = await response.json();
-    if (data.status === "success") {
-      alert("Member updated successfully!");
-      const modalEl = document.getElementById('editBookModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      modal.hide();
-      location.reload();
-    } else {
-      alert("Update failed!");
+    const formData = {
+      isbn,
+      title,
+      author,
+      category,
+      publication_year,
+      add_copies,
+      total_copies,
+      available_copies
     }
-  } catch (error) {
-    console.error("Error:", error);
+
+    try {
+      const response = await fetch("/update_book/", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify(formData)
+      });
+      const data = await response.json();
+      if (data.status === "success") {
+        alert("Member updated successfully!");
+        const modalEl = document.getElementById('editBookModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        location.reload();
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
   }
+  
 }
 
 

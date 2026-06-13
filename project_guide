@@ -1,4 +1,4 @@
-1)sudo service postgresql start
+1) sudo service postgresql start
  
 
 2) pip install psycopg2-binary

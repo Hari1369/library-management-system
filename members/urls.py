@@ -1,11 +1,11 @@
 from django.urls import path
-from .views import login_page, logout_page, dashboard_page, librarian_registration_page, member_registration_page, book_registration_page, book_category_registration_page, book_details_page, member_details_page, librarian_details_page, member_update_request, librarian_update_request, book_update_request, member_delete_request, librarian_delete_request, book_delete_request, member_api, books_api, borrow_records, borrow_returns, borrow_records_register, record_report
+from .views import login_page, logout_page, dashboard_page, dashboard_upper, librarian_registration_page, member_registration_page, book_registration_page, book_category_registration_page, book_details_page, member_details_page, librarian_details_page, member_update_request, librarian_update_request, book_update_request, member_delete_request, librarian_delete_request, book_delete_request, member_api, books_api, borrow_records, borrow_returns, borrow_records_register, record_report
 
 urlpatterns = [
     path("", login_page, name="log_in"),
     path('logout/', logout_page, name='logout'),
     path("dashboard_page/", dashboard_page, name="dashboard_page"),
-
+    path("dashboard_upper/", dashboard_upper, name="dashboard_upper"),
 
 
 

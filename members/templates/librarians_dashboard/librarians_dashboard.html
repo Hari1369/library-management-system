@@ -4,49 +4,106 @@
 {% block content %}
 <p class="text-muted-sm mb-3">Overview —</p>
 
-<!-- Stat Cards -->
 <div class="row g-3 mb-4">
+
   <div class="col-6 col-md-3">
     <div class="stat-card">
       <div class="stat-label">Total Books</div>
       <div class="stat-value">
+        <span class="total-books">0</span>
         <i class="bi bi-book stat-icon text-primary"></i>
       </div>
     </div>
   </div>
+
   <div class="col-6 col-md-3">
     <div class="stat-card">
       <div class="stat-label">Members</div>
       <div class="stat-value">
+        <span class="total-members">0</span>
         <i class="bi bi-people stat-icon" style="color:#0F6E56"></i>
       </div>
     </div>
   </div>
+
   <div class="col-6 col-md-3">
     <div class="stat-card">
       <div class="stat-label">Issued Today</div>
       <div class="stat-value">
+        <span class="issued-today">0</span>
         <i class="bi bi-arrow-up-circle stat-icon" style="color:#854F0B"></i>
       </div>
     </div>
   </div>
+
   <div class="col-6 col-md-3">
     <div class="stat-card">
       <div class="stat-label">Overdue</div>
       <div class="stat-value">
+        <span class="overdue-books">0</span>
         <i class="bi bi-exclamation-circle stat-icon" style="color:#A32D2D"></i>
       </div>
     </div>
   </div>
+
 </div>
 
-<!-- Recent Issues Table -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-label">Total Issued</div>
+      <div class="stat-value">
+        <span class="total-issued-books">0</span>
+        <i class="bi bi-journal-arrow-up stat-icon text-warning"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="stat-label">Total Fine</div>
+      <div class="stat-value">
+        <span class="total-fine">0</span>
+        <i class="bi bi-cash-coin stat-icon text-danger"></i>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Recent Issues -->
 <div class="section-header">
   <span class="section-title">Recent Issues</span>
   <a href="" class="btn btn-lms-outline btn-sm">View all</a>
 </div>
 
 <div class="lms-table">
-
 </div>
+
+<script>
+async function loadDashboardData() {
+  try {
+    const response = await fetch("/dashboard_upper/", {
+      method: "GET"
+    });
+
+    const data = await response.json();
+    console.log("Dashboard Data:", data);
+
+    document.querySelector(".total-books").innerText = data.total_books;
+    document.querySelector(".total-members").innerText = data.total_members;
+    document.querySelector(".total-fine").innerText = data.total_fine;
+    document.querySelector(".overdue-books").innerText = data.overdue_books;
+    document.querySelector(".total-issued-books").innerText = data.total_issued_books;
+    document.querySelector(".issued-today").innerText = data.issued_today;
+
+  } catch (err) {
+    console.error("Dashboard fetch failed:", err);
+  }
+}
+
+loadDashboardData();
+setInterval(loadDashboardData, 20000);
+</script>
+
 {% endblock %}

@@ -213,7 +213,8 @@ window.save_user = async function() {
         modal.hide();
         location.reload();
       } else {
-        alert("Update failed!");
+        alert(data.error);
+        location.reload();
       }
     } catch (error) {
       console.error("Error:", error);

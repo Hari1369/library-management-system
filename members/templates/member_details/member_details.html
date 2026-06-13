@@ -179,6 +179,37 @@ window.save_member = async function() {
   var address = document.getElementById("member_address").value;
   var membership_date = document.getElementById("member_membership_date").value;
 
+  if (!id) {
+    alert("Member ID is required");
+    return;
+  }
+
+  if (!name) {
+    alert("Name is required");
+    return;
+  }
+
+  if (!email) {
+    alert("Email is required");
+    return;
+  }
+
+  if (!phone) {
+    alert("Phone number is required");
+    return;
+  }
+
+  if (!address) {
+    alert("Address is required");
+    return;
+  }
+
+  if (!membership_date) {
+    alert("Membership date is required");
+    return;
+  }
+
+
   // ========================================> 
   console.log("ID               : ", id);
   console.log("NAME             : ", name);
@@ -214,7 +245,7 @@ window.save_member = async function() {
       modal.hide();
       location.reload();
     } else {
-      alert("Update failed!");
+      alert(data.message);
     }
   } catch (error) {
     console.error("Error:", error);

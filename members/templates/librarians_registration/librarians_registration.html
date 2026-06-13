@@ -10,15 +10,13 @@
   </div>
 
   {% if success %}
-    <div class="alert alert-success">
-      {{ success }}
-    </div>
+      alert("{{ success|escapejs }}");
   {% endif %}
 
   {% if error %}
-    <div class="alert alert-danger">
-      {{ error }}
-    </div>
+    <script>
+      alert("{{ error|escapejs }}");
+    </script>
   {% endif %}
 
 <div class="d-flex justify-content-center">

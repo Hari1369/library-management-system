@@ -58,14 +58,7 @@
 async function sendReport() {
     try {
         const response = await fetch("/record_report/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCookie("csrftoken")
-            },
-            body: JSON.stringify({
-                message: "auto report"
-            })
+            method: "GET"
         });
 
         const data = await response.json();
