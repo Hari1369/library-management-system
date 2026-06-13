@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import login_page, logout_page, dashboard_page, dashboard_upper, dashboard_book_data, dashboard_lowest_books, get_member_issue_details, return_fineregister, dashboard_total_activemember, dashboard_total_inactivemember,  librarian_registration_page, member_registration_page, book_registration_page, book_category_registration_page, book_details_page, member_details_page, librarian_details_page, member_update_request, librarian_update_request, book_update_request, member_delete_request, librarian_delete_request, book_delete_request, member_api, books_api, borrow_records, borrow_returns, borrow_records_register, record_report, return_fineregister
+from .views import login_page, logout_page, dashboard_page, dashboard_upper, dashboard_book_data, dashboard_lowest_books, get_member_issue_details, return_fineregister, dashboard_total_activemember, dashboard_total_inactivemember,  librarian_registration_page, member_registration_page, book_registration_page, book_category_registration_page, book_details_page, member_details_page, librarian_details_page, member_update_request, librarian_update_request, book_update_request, member_delete_request, librarian_delete_request, book_delete_request, member_api, finereport, books_api, borrow_records, borrow_returns, borrow_records_register, record_report, return_fineregister
 
 urlpatterns = [
     path("", login_page, name="log_in"),
@@ -38,9 +38,10 @@ urlpatterns = [
     path("record_report/", record_report, name="record_report"),
 
     path("returns/", borrow_returns, name="returns"),
+    path("fine_report/", finereport, name="finereport"),
     path("return_fineregister/", return_fineregister, name="return_fineregister"),
     path("get_member_issue_details/", get_member_issue_details, name="get_member_issue_details"),
-        
+    
 
 
 

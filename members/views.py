@@ -17,6 +17,7 @@ from datetime import datetime, date
 from django.db.models import Sum, Count, Max, Sum
 from django.db.models import F
 from django.utils import timezone
+from django.utils.timezone import now
 import json
 today = timezone.now().date()
 
@@ -1263,6 +1264,170 @@ def record_report(request):
 
 
 
+# def get_member_issue_details(request):
+#     if request.method != "POST":
+#         return JsonResponse({"error": "Method not allowed"}, status=405)
+#     try:
+#         data = json.loads(request.body)
+#         member_id = data.get("member_id")
+#     except (json.JSONDecodeError, AttributeError):
+#         return JsonResponse({"error": "Invalid JSON body"}, status=400)
+
+#     if not member_id:
+#         return JsonResponse({"error": "No member_id provided"}, status=400)
+
+#     fine_record = (FineMaintanence.objects.filter(member_id=member_id, is_paid=False).select_related("librarian", "book").order_by("-created_at").first()
+# )
+
+#     if fine_record:
+#         today        = date.today()
+#         overdue_date = fine_record.overdue_date
+#         overdue_days = max((today - overdue_date).days, 0) if overdue_date else 0
+#         issue = (IssueMaintanence.objects.filter(member_id=member_id, book_id=fine_record.book_id, status="issued").order_by("-issue_date").first())
+#         if issue:
+#             issue_id = issue.id
+#         else:
+#             issue_id = None
+#         return JsonResponse({
+#             "issue_id":       issue.id,
+#             "fine_record_id": fine_record.id,
+#             "librarian_id":   fine_record.librarian.id,
+#             "librarian_name": f"{fine_record.librarian.name} {fine_record.librarian.surname}",
+#             "book_id":        fine_record.book.id,
+#             "book_title":     fine_record.book.title,
+#             "fine_cost":      fine_record.fine_cost,
+#             "overdue_days":   overdue_days,
+#         })
+
+#     try:
+#         issue = (IssueMaintanence.objects.filter(member_id=member_id, status="issued").select_related("librarian", "book").latest("issue_date"))
+#     except IssueMaintanence.DoesNotExist:
+#         return JsonResponse({"error": "This member has not been issued any books."})
+#     today        = date.today()
+#     due_date     = issue.due_date.date() if issue.due_date else None
+#     overdue_days = max((today - due_date).days, 0) if due_date else 0
+#     fine_cost    = overdue_days * 10
+
+#     return JsonResponse({
+#         "issue_id":       issue.id,
+#         "fine_record_id": None,
+#         "librarian_id":   issue.librarian.id,
+#         "librarian_name": f"{issue.librarian.name} {issue.librarian.surname}",
+#         "book_id":        issue.book.id,
+#         "book_title":     issue.book.title,
+#         "fine_cost":      fine_cost,
+#         "overdue_days":   overdue_days,
+#     })
+
+
+# @login_required
+# @role_required(["super_admin", "librarian"])
+# def return_fineregister(request):
+#     members = Member.objects.filter(is_active=True)
+#     if request.method == "POST":
+#         member_id = request.POST.get("member")
+#         issue_id = request.POST.get("issue_id")
+#         fine_record_id = request.POST.get("fine_record_id")
+#         librarian_id = request.POST.get("librarian")
+#         book_id = request.POST.get("book")
+#         fine_cost = int(request.POST.get("fine_cost") or 0)
+#         paid_cost = int(request.POST.get("paid_cost") or 0)
+#         is_paid = "is_paid"     in request.POST
+#         is_return = "is_returned" in request.POST
+
+#         # ========================================>
+#         print("MEMBER ID    : ", member_id)
+#         print("ISSUE ID     : ", issue_id)
+#         print("RECORD ID    : ", fine_record_id)
+#         print("LIBRARIAN ID : ", librarian_id)
+#         print("BOOK ID      : ", book_id)
+#         print("FINE CAST    : ", fine_cost)
+#         print("PAID_CAST    : ", paid_cost)
+#         print("IS_PAID      : ", is_paid)
+#         print("IS_RETURN    : ", is_return)
+#         # ========================================>
+
+
+#         try:
+#             remain_cost = fine_cost - paid_cost
+#         except ValueError:
+#             return render(request, "return_fineregister/return_fineregister.html", {"members": members,"error": "Invalid fine or paid cost value!",})
+
+#         if paid_cost > fine_cost:
+#             return render(request, "return_fineregister/return_fineregister.html", {"members": members,"error": "Paid cost cannot exceed the fine cost!"})
+
+
+#         if fine_cost > 0 and paid_cost == fine_cost:
+#             print("Found")
+#             is_paid = True
+#         else:
+#             is_paid = False
+
+#         if is_paid:
+#             paid_time = now()
+#         else:
+#             paid_time = None
+
+
+#         try:
+#             if fine_record_id:
+#                 finemaintanence_data = FineMaintanence.objects.get(id=fine_record_id)
+#                 total_paid   = (finemaintanence_data.paid_cost or 0) + paid_cost
+#                 remain_cost  = fine_cost - total_paid
+
+#                 if total_paid > fine_cost:
+#                     return render(request, "return_fineregister/return_fineregister.html", {
+#                         "members": members,
+#                         "error": f"Total paid (₹{total_paid}) cannot exceed the fine cost (₹{fine_cost})!",
+#                     })
+
+#                 is_paid   = (remain_cost == 0)
+#                 paid_time = now() if is_paid else None
+
+#                 finemaintanence_data.paid_cost   = total_paid
+#                 finemaintanence_data.remain_cost = remain_cost
+#                 finemaintanence_data.is_paid     = is_paid
+#                 finemaintanence_data.is_return   = is_return
+#                 finemaintanence_data.paid_time   = paid_time
+#                 finemaintanence_data.save()
+#             else:
+#                 if fine_cost == paid_cost:
+#                     paid_time =  date.today()
+#                 else:
+#                     paid_time = None
+
+#                 FineMaintanence.objects.create(
+#                     librarian_id = librarian_id,
+#                     member_id = member_id,
+#                     book_id = book_id,
+#                     fine_cost = fine_cost,
+#                     paid_cost = paid_cost,
+#                     remain_cost = remain_cost,
+#                     is_paid = is_paid,
+#                     is_return = is_return,
+#                     overdue_date = overdue_date,
+#                     paid_time = paid_time,
+#                 )
+
+#             if issue_id and is_return:
+#                 IssueMaintanence.objects.filter(id=issue_id).update(status = "returned", return_date = date.today(),)
+#                 messages.success(request, f"Successfully received ₹{paid_cost} from the member.")
+#             return redirect("return_fineregister")
+
+#         except Exception as e:
+#             print("Something went wrong")
+#             return render(request, "return_fineregister/return_fineregister.html", {
+#                 "members": members,
+#                 "error":   "Something went wrong while saving. Please try again.",
+#             })
+
+#     return render(request, "return_fineregister/return_fineregister.html", {"members": members,})
+
+
+
+
+
+
 def get_member_issue_details(request):
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
@@ -1275,33 +1440,53 @@ def get_member_issue_details(request):
     if not member_id:
         return JsonResponse({"error": "No member_id provided"}, status=400)
 
-    fine_record = (FineMaintanence.objects.filter(member_id=member_id, is_paid=False).select_related("librarian", "book").order_by("-created_at").first()
-)
+    fine_record = (
+        FineMaintanence.objects.filter(member_id=member_id, is_paid=False)
+        .select_related("librarian", "book")
+        .order_by("-created_at")
+        .first()
+    )
 
     if fine_record:
         today        = date.today()
         overdue_date = fine_record.overdue_date
         overdue_days = max((today - overdue_date).days, 0) if overdue_date else 0
-        issue = (IssueMaintanence.objects.filter(member_id=member_id, book_id=fine_record.book_id, status="issued").order_by("-issue_date").first())
-        if issue:
-            issue_id = issue.id
-        else:
-            issue_id = None
+
+        issue = (
+            IssueMaintanence.objects.filter(
+                member_id=member_id, book_id=fine_record.book_id, status="issued"
+            ).order_by("-issue_date").first()
+        )
+        issue_id = issue.id if issue else None
+
+        already_paid = fine_record.paid_cost or 0
+        # remain_cost should already be stored, but fall back to a calculation just in case
+        remain_cost  = fine_record.remain_cost
+        if remain_cost is None:
+            remain_cost = fine_record.fine_cost - already_paid
+
         return JsonResponse({
-            "issue_id":       issue.id,
+            "issue_id":       issue_id,
             "fine_record_id": fine_record.id,
             "librarian_id":   fine_record.librarian.id,
             "librarian_name": f"{fine_record.librarian.name} {fine_record.librarian.surname}",
             "book_id":        fine_record.book.id,
             "book_title":     fine_record.book.title,
             "fine_cost":      fine_record.fine_cost,
+            "already_paid":   already_paid,
+            "remain_cost":    remain_cost,
             "overdue_days":   overdue_days,
         })
 
     try:
-        issue = (IssueMaintanence.objects.filter(member_id=member_id, status="issued").select_related("librarian", "book").latest("issue_date"))
+        issue = (
+            IssueMaintanence.objects.filter(member_id=member_id, status="issued")
+            .select_related("librarian", "book")
+            .latest("issue_date")
+        )
     except IssueMaintanence.DoesNotExist:
         return JsonResponse({"error": "This member has not been issued any books."})
+
     today        = date.today()
     due_date     = issue.due_date.date() if issue.due_date else None
     overdue_days = max((today - due_date).days, 0) if due_date else 0
@@ -1315,6 +1500,8 @@ def get_member_issue_details(request):
         "book_id":        issue.book.id,
         "book_title":     issue.book.title,
         "fine_cost":      fine_cost,
+        "already_paid":   0,
+        "remain_cost":    fine_cost,
         "overdue_days":   overdue_days,
     })
 
@@ -1324,70 +1511,104 @@ def get_member_issue_details(request):
 def return_fineregister(request):
     members = Member.objects.filter(is_active=True)
     if request.method == "POST":
-        member_id = request.POST.get("member")
-        issue_id = request.POST.get("issue_id")
+        member_id      = request.POST.get("member")
+        issue_id       = request.POST.get("issue_id")
         fine_record_id = request.POST.get("fine_record_id")
-        librarian_id = request.POST.get("librarian")
-        book_id = request.POST.get("book")
-        fine_cost = request.POST.get("fine_cost") or 0
-        paid_cost = request.POST.get("paid_cost") or 0
-        is_paid = "is_paid"     in request.POST
-        is_return = "is_returned" in request.POST
+        librarian_id   = request.POST.get("librarian")
+        book_id        = request.POST.get("book")
+        fine_cost      = int(request.POST.get("fine_cost") or 0)
+        paid_cost      = int(request.POST.get("paid_cost") or 0)
+        is_return      = "is_returned" in request.POST
 
-        try:
-            fine_cost = int(fine_cost)
-            paid_cost = int(paid_cost)
-        except ValueError:
-            return render(request, "return_fineregister/return_fineregister.html", {"members": members,"error": "Invalid fine or paid cost value!",})
+        # ========================================>
+        print("MEMBER ID    : ", member_id)
+        print("ISSUE ID     : ", issue_id)
+        print("RECORD ID    : ", fine_record_id)
+        print("LIBRARIAN ID : ", librarian_id)
+        print("BOOK ID      : ", book_id)
+        print("FINE CAST    : ", fine_cost)
+        print("PAID_CAST    : ", paid_cost)
+        print("IS_RETURN    : ", is_return)
+        # ========================================>
+
+        if paid_cost < 0:
+            return render(request, "return_fineregister/return_fineregister.html", {
+                "members": members,
+                "error": "Paid cost cannot be negative!",
+            })
 
         if paid_cost > fine_cost:
-            return render(request, "return_fineregister/return_fineregister.html", {"members": members,"error": "Paid cost cannot exceed the fine cost!"})
-
-        if fine_cost > 0 and paid_cost == fine_cost:
-            print("Found")
-            is_paid = True
-        else:
-            is_paid = False
-
-        if is_paid:
-            paid_time = now()
-        else:
-            paid_time = None
-
+            return render(request, "return_fineregister/return_fineregister.html", {
+                "members": members,
+                "error": "Paid cost cannot exceed the fine cost!",
+            })
 
         try:
             if fine_record_id:
-                FineMaintanence.objects.filter(id=fine_record_id).update(paid_cost = paid_cost,is_paid = is_paid, is_return = is_return, paid_time = paid_time,)
+                finemaintanence_data = FineMaintanence.objects.get(id=fine_record_id)
+
+                # total amount paid across all sessions (previous + this one)
+                total_paid  = (finemaintanence_data.paid_cost or 0) + paid_cost
+                remain_cost = fine_cost - total_paid
+
+                if total_paid > fine_cost:
+                    return render(request, "return_fineregister/return_fineregister.html", {
+                        "members": members,
+                        "error": f"Total paid (₹{total_paid}) cannot exceed the fine cost (₹{fine_cost})!",
+                    })
+
+                is_paid   = (remain_cost == 0)
+                paid_time = now() if is_paid else finemaintanence_data.paid_time
+
+                finemaintanence_data.fine_cost   = fine_cost
+                finemaintanence_data.paid_cost   = total_paid
+                finemaintanence_data.remain_cost = remain_cost
+                finemaintanence_data.is_paid     = is_paid
+                finemaintanence_data.is_return   = is_return
+                finemaintanence_data.paid_time   = paid_time
+                finemaintanence_data.save()
+
             else:
-                if fine_cost > 0:
-                    overdue_date = date.today()
-                else:
-                    overdue_date = None
+                # brand-new fine record — nothing paid previously
+                remain_cost = fine_cost - paid_cost
+                is_paid     = (fine_cost > 0 and remain_cost == 0)
+                paid_time   = now() if is_paid else None
 
                 FineMaintanence.objects.create(
-                    librarian_id = librarian_id,
-                    member_id = member_id,
-                    book_id = book_id,
-                    fine_cost = fine_cost,
-                    paid_cost = paid_cost,
-                    is_paid = is_paid,
-                    is_return = is_return,
-                    overdue_date = overdue_date,
-                    paid_time = paid_time,
+                    librarian_id  = librarian_id,
+                    member_id     = member_id,
+                    book_id       = book_id,
+                    fine_cost     = fine_cost,
+                    paid_cost     = paid_cost,
+                    remain_cost   = remain_cost,
+                    is_paid       = is_paid,
+                    is_return     = is_return,
+                    overdue_date  = date.today(),
+                    paid_time     = paid_time,
                 )
 
             if issue_id and is_return:
-                print("1")
-                IssueMaintanence.objects.filter(id=issue_id).update(status = "returned",return_date = date.today(),)
+                IssueMaintanence.objects.filter(id=issue_id).update(
+                    status="returned", return_date=date.today(),
+                )
+
+            if paid_cost > 0:
+                messages.success(request, f"Successfully received ₹{paid_cost} from the member.")
+            else:
+                messages.success(request, "Record updated successfully.")
+
             return redirect("return_fineregister")
 
         except Exception as e:
-            print("Something went wrong")
+            print("Something went wrong:", e)
             return render(request, "return_fineregister/return_fineregister.html", {
                 "members": members,
                 "error":   "Something went wrong while saving. Please try again.",
             })
-    return render(request, "return_fineregister/return_fineregister.html", {"members": members,})
+
+    return render(request, "return_fineregister/return_fineregister.html", {"members": members})
+
+
 
 
 # def get_member_issue_details(request):
@@ -1466,6 +1687,14 @@ def return_fineregister(request):
 
 
 
+
+
+
+def finereport(request):
+    fine_report = FineMaintanence.objects.all().order_by("is_paid")
+    return render(request, "fine_report/fine_report.html", {
+        "fine_report": fine_report,
+    })
 
 
 

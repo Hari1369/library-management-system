@@ -84,6 +84,7 @@ class FineMaintanence(models.Model):
     book = models.ForeignKey(BookDetails, on_delete=models.CASCADE)
     fine_cost = models.IntegerField()
     paid_cost = models.IntegerField(null=True)
+    remain_cost = models.IntegerField(null=True)
     overdue_date = models.DateField(null=True, blank=True)
     books_number = models.IntegerField(default=1)
     is_paid = models.BooleanField(default=False)

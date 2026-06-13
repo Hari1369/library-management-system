@@ -11,18 +11,24 @@
 <div class="d-flex justify-content-center">
     <div class="lms-card w-100">
 
-        <div id="fetch-alert" class="alert alert-warning d-none mb-3" role="alert"></div>
+        <div id="fetch-alert"   class="alert alert-warning d-none mb-3" role="alert"></div>
         <div id="success-alert" class="alert alert-success d-none mb-3" role="alert"></div>
 
         <form method="post" id="fine-form">
             {% csrf_token %}
-            <input type="hidden" name="issue_id"    id="issue_id">
-            <input type="hidden" name="librarian"   id="librarian_id">
-            <input type="hidden" name="book"        id="book_id">
+
+            <input type="hidden" name="issue_id"       id="issue_id">
+            <input type="hidden" name="librarian"      id="librarian_id">
+            <input type="hidden" name="book"           id="book_id">
+            <input type="hidden" name="fine_record_id" id="fine_record_id">
+            <input type="hidden" name="fine_cost"      id="fine_cost_hidden">
 
             <div class="row g-3">
+
                 <div class="col-md-6">
-                    <label class="lms-form-label">Member <span class="text-danger">*</span></label>
+                    <label class="lms-form-label">
+                        Member <span class="text-danger">*</span>
+                    </label>
                     <select name="member" id="member-select"
                             class="form-select select2 lms-form-control" required>
                         <option value="">— Select Member —</option>
@@ -33,68 +39,106 @@
                         {% endfor %}
                     </select>
                 </div>
+
                 <div class="col-md-6">
                     <label class="lms-form-label">Librarian</label>
                     <input type="text" id="librarian_display"
                            class="form-control lms-form-control" readonly
                            placeholder="Auto-filled on member select">
                 </div>
+
                 <div class="col-md-6">
                     <label class="lms-form-label">Book</label>
                     <input type="text" id="book_display"
                            class="form-control lms-form-control" readonly
                            placeholder="Auto-filled on member select">
                 </div>
+
                 <div class="col-md-6">
-                    <label class="lms-form-label">Fine Cost</label>
+                    <label class="lms-form-label">Total Fine</label>
                     <div class="input-group">
                         <span class="input-group-text">₹</span>
-                        <input type="number" name="fine_cost" id="fine_cost"
+                        <input type="number" id="fine_cost_display"
                                class="form-control lms-form-control" readonly
                                placeholder="Auto-calculated">
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <label class="lms-form-label">Paid Cost</label>
+
+                <div class="col-md-4">
+                    <label class="lms-form-label">Already Paid</label>
                     <div class="input-group">
                         <span class="input-group-text">₹</span>
-                        <input type="number" name="paid_cost" id="paid_cost"
-                               class="form-control lms-form-control"
-                               placeholder="Enter amount paid" min="0" disabled>
-                    </div>
-                    <div id="paid-cost-error" class="text-danger small mt-1 d-none">
-                        Paid amount cannot exceed the fine cost.
+                        <input type="number" id="already_paid"
+                               class="form-control lms-form-control" readonly value="0">
                     </div>
                 </div>
-                <div class="col-md-6 d-flex align-items-end">
-                    <div id="overdue_info" class="d-none">
-                        <span class="badge bg-danger fs-6">
+
+                <div class="col-md-4">
+                    <label class="lms-form-label">Remaining Balance</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input type="number" id="remaining_balance"
+                               class="form-control lms-form-control" readonly value="0">
+                    </div>
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end">
+                    <div id="overdue_info" class="d-none w-100">
+                        <span class="badge bg-danger fs-6 w-100 text-center py-2">
                             <i class="bi bi-clock-history me-1"></i>
                             Overdue: <span id="overdue-days">0</span> day(s)
                         </span>
                     </div>
-                    <div id="no-overdue-info" class="d-none">
-                        <span class="badge bg-success fs-6">
+                    <div id="no-overdue-info" class="d-none w-100">
+                        <span class="badge bg-success fs-6 w-100 text-center py-2">
                             <i class="bi bi-check-circle me-1"></i>
-                            No overdue — Fine: ₹0
+                            No Overdue — Fine: ₹0
                         </span>
                     </div>
                 </div>
+
+                <div class="col-md-6">
+                    <label class="lms-form-label">Pay Now</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input type="number" name="paid_cost" id="paid_cost"
+                               class="form-control lms-form-control"
+                               placeholder="Enter amount to pay" min="0" disabled>
+                    </div>
+                    <div id="paid-cost-error" class="text-danger small mt-1 d-none"></div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="lms-form-label">Balance After This Payment</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input type="number" id="balance_after"
+                               class="form-control lms-form-control" readonly value="0">
+                    </div>
+                    <div id="balance-info" class="small mt-1 d-none"></div>
+                </div>
+
                 <div class="col-md-12">
                     <div class="border rounded p-3 d-flex gap-5 align-items-center">
                         <div class="d-flex align-items-center gap-2">
                             <input type="checkbox" name="is_paid" id="is_paid"
-                                   style="width:18px; height:18px;" disabled>
+                                   style="width:18px;height:18px;" disabled>
                             <label for="is_paid" class="lms-form-label mb-0">Is Paid</label>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <input type="checkbox" name="is_returned" id="is_returned"
-                                   style="width:18px; height:18px;" disabled>
+                                   style="width:18px;height:18px;" disabled>
                             <label for="is_returned" class="lms-form-label mb-0">Is Returned</label>
                         </div>
                     </div>
+                    <div class="small text-muted mt-1">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <em>Is Paid</em> is set automatically once the full fine is recovered.
+                        <em>Is Returned</em> can be ticked independently when the book is handed back.
+                    </div>
                 </div>
             </div>
+
             <div class="d-flex gap-2 mt-4">
                 <button type="submit" class="btn btn-lms-primary" id="submit-btn" disabled>
                     <i class="bi bi-check-lg me-1"></i>Save Fine Record
@@ -107,28 +151,38 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+
     var librariandisplay = document.getElementById("librarian_display");
     var bookdisplay = document.getElementById("book_display");
-    var finecostInput = document.getElementById("fine_cost");
+    var finecostdisplay = document.getElementById("fine_cost_display");
+    var finecosthidden = document.getElementById("fine_cost_hidden");
     var paidcostinput = document.getElementById("paid_cost");
     var overdueinfo = document.getElementById("overdue_info");
-    var nooverdueinfo = document.getElementById("no-overdue-info");
-    var overdueDays = document.getElementById("overdue-days");
-    var ispaidcheck = document.getElementById("is_paid");
-    var isreturnedcheck = document.getElementById("is_returned");
-    var submitbtn = document.getElementById("submit-btn");
+    var noverdueinfo = document.getElementById("no-overdue-info");
+    var overduedays = document.getElementById("overdue-days");
+    var ispaid = document.getElementById("is_paid");
+    var isreturned = document.getElementById("is_returned");
+    var submitvtn = document.getElementById("submit-btn");
     var fetchalert = document.getElementById("fetch-alert");
-    var successalert = document.getElementById("success-alert");
     var paidcosterror = document.getElementById("paid-cost-error");
+    var balanceinfo = document.getElementById("balance-info");
 
-    var issueIdhidden = document.getElementById("issue_id");
+    var issueidhidden = document.getElementById("issue_id");
     var librarianidhidden = document.getElementById("librarian_id");
-    var bookIidhidden = document.getElementById("book_id");
+    var bookidhidden = document.getElementById("book_id");
+    var finerecordidhidden= document.getElementById("fine_record_id");
 
-    var currentfinecost = 0;
+    var alreadypaid = document.getElementById("already_paid");
+    var remainingbalance = document.getElementById("remaining_balance");
+    var balanceafter = document.getElementById("balance_after");
 
-    function showAlert(el, msg) {
+    var totalFineCost = 0;
+    var alreadyPaidAmt = 0;
+    var remainingAmt = 0;
+
+    function showAlert(el, msg, type = "") {
         el.textContent = msg;
+        el.className = `alert alert-${type || "warning"} mb-3`;
         el.classList.remove("d-none");
     }
     function hideAlert(el) {
@@ -137,24 +191,82 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function resetFields() {
-        librariandisplay.value  = "";
-        bookdisplay.value       = "";
-        finecostInput.value     = "";
-        paidcostinput.value     = "";
-        paidcostinput.disabled  = true;
-        ispaidcheck.checked     = false;
-        ispaidcheck.disabled    = true;
-        isreturnedcheck.checked = false;
-        isreturnedcheck.disabled= true;
+        librariandisplay.value      = "";
+        bookdisplay.value           = "";
+        finecostdisplay.value       = "";
+        finecosthidden.value        = "";
+        paidcostinput.value         = "";
+        paidcostinput.disabled      = true;
+        ispaid.checked         = false;
+        ispaid.disabled        = true;
+        isreturned.checked     = false;
+        isreturned.disabled    = true;
         overdueinfo.classList.add("d-none");
-        nooverdueinfo.classList.add("d-none");
-        submitbtn.disabled      = true;
-        issueIdhidden.value     = "";
-        librarianidhidden.value = "";
-        bookIidhidden.value      = "";
+        noverdueinfo.classList.add("d-none");
+        submitvtn.disabled          = true;
+        issueidhidden.value         = "";
+        librarianidhidden.value     = "";
+        bookidhidden.value          = "";
+        finerecordidhidden.value    = "";
+        alreadypaid.value         = "0";
+        remainingbalance.value    = "0";
+        balanceafter.value        = "0";
+        totalFineCost               = 0;
+        alreadyPaidAmt              = 0;
+        remainingAmt                = 0;
         hideAlert(fetchalert);
         hideAlert(paidcosterror);
-        currentfinecost = 0;
+        balanceinfo.classList.add("d-none");
+        balanceinfo.textContent     = "";
+    }
+
+    function recalculate() {
+        var paying     = parseFloat(paidcostinput.value) || 0;
+        var afterPay   = remainingAmt - paying;
+
+        balanceafter.value = afterPay >= 0 ? afterPay : 0;
+
+        hideAlert(paidcosterror);
+        balanceinfo.classList.add("d-none");
+
+        if (paying < 0) {
+            showAlert(paidcosterror, "Amount cannot be negative.", "danger");
+            paidcosterror.classList.remove("d-none");
+            submitvtn.disabled = true;
+            return;
+        }
+
+        if (paying > remainingAmt) {
+            paidcosterror.textContent =
+                `₹${paying} exceeds the remaining balance of ₹${remainingAmt}.`;
+            paidcosterror.classList.remove("d-none");
+            ispaid.checked  = false;
+            submitvtn.disabled   = true;
+            return;
+        }
+
+        if (totalFineCost === 0) {
+            ispaid.checked  = true;
+            ispaid.disabled = false;
+        } else if (paying > 0 && afterPay === 0) {
+            ispaid.checked  = true;
+            ispaid.disabled = true;
+            balanceinfo.textContent = "Full amount recovered fine will be marked as paid!";
+            balanceinfo.className   = "small text-success mt-1";
+            balanceinfo.classList.remove("d-none");
+        } else if (paying > 0 && afterPay > 0) {
+            ispaid.checked  = false;
+            ispaid.disabled = true;
+            balanceinfo.textContent =
+                `Partial payment — ₹${afterPay} will remain as balance.`;
+            balanceinfo.className   = "small text-warning mt-1";
+            balanceinfo.classList.remove("d-none");
+        } else {
+            ispaid.checked  = false;
+            ispaid.disabled = false;
+        }
+
+        submitvtn.disabled = (paying <= 0 && totalFineCost > 0);
     }
 
     $('#member-select').on('select2:select', function (e) {
@@ -170,51 +282,66 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             body: JSON.stringify({ member_id: memberId })
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw err; });
-            }
-            return response.json();
+        .then(r => {
+            if (!r.ok) return r.json().then(err => { throw err; });
+            return r.json();
         })
         .then(data => {
-            console.log("DATA : ", data)
-
-            issueIdhidden.value     = data.issue_id;
-            librarianidhidden.value = data.librarian_id;
-            bookIidhidden.value      = data.book_id;
-
-            librariandisplay.value = data.librarian_name;
-            bookdisplay.value      = data.book_title;
-            finecostInput.value    = data.fine_cost;
-            currentfinecost        = data.fine_cost;
-
-            if (data.overdue_days > 0) {
-                overdueDays.textContent = data.overdue_days;
-                overdueinfo.classList.remove("d-none");
-                nooverdueinfo.classList.add("d-none");
-            } else {
-                overdueinfo.classList.add("d-none");
-                nooverdueinfo.classList.remove("d-none");
-            }
-
-            paidcostinput.disabled   = false;
-            isreturnedcheck.disabled = false;
-
-            if (currentfinecost === 0) {
-                ispaidcheck.checked  = true;
-                ispaidcheck.disabled = false;
-                submitbtn.disabled   = false;
-            }
+            console.log("API DATA:", data);
 
             if (data.error) {
-                alert(data.error);
-                return;
-                
+                throw data;
+            }
+
+            issueidhidden.value = data.issue_id      || "";
+            librarianidhidden.value = data.librarian_id  || "";
+            bookidhidden.value = data.book_id       || "";
+            finerecordidhidden.value = data.fine_record_id || "";
+            librariandisplay.value = data.librarian_name || "";
+            bookdisplay.value = data.book_title     || "";
+            totalFineCost = parseInt(data.fine_cost)    || 0;
+            alreadyPaidAmt = parseInt(data.already_paid) || 0;
+            remainingAmt = (data.remain_cost !== undefined && data.remain_cost !== null)
+                                        ? parseInt(data.remain_cost)
+                                        : totalFineCost;
+
+            finecostdisplay.value = totalFineCost;
+            finecosthidden.value = totalFineCost;
+            alreadypaid.value = alreadyPaidAmt;
+            remainingbalance.value = remainingAmt;
+            balanceafter.value = remainingAmt;
+
+            if (data.overdue_days > 0) {
+                overduedays.textContent = data.overdue_days;
+                overdueinfo.classList.remove("d-none");
+                noverdueinfo.classList.add("d-none");
+            } else {
+                overdueinfo.classList.add("d-none");
+                noverdueinfo.classList.remove("d-none");
+            }
+
+            isreturned.disabled = false;
+
+            if (totalFineCost === 0) {
+                ispaid.checked  = true;
+                ispaid.disabled = false;
+                submitvtn.disabled   = false;
+            } else if (remainingAmt === 0) {
+                ispaid.checked  = true;
+                ispaid.disabled = true;
+                paidcostinput.disabled = true;
+                showAlert(fetchalert,
+                    "This fine has already been fully paid. You may still update the return status.",
+                    "info");
+                submitvtn.disabled = false;
+            } else {
+                paidcostinput.disabled = false;
+                paidcostinput.max      = remainingAmt;
             }
         })
         .catch(err => {
             const msg = err.error || "No active issued book found for this member.";
-            showAlert(fetchalert, msg);
+            showAlert(fetchalert, msg, "warning");
             resetFields();
         });
     });
@@ -223,53 +350,29 @@ document.addEventListener("DOMContentLoaded", function () {
         resetFields();
     });
 
-    paidcostinput.addEventListener("input", function () {
-        const paid = parseFloat(this.value) || 0;
-        hideAlert(paidcosterror);
-
-        if (paid > currentfinecost) {
-            showAlert(paidcosterror,
-                `Paid amount (₹${paid}) cannot exceed the fine cost (₹${currentfinecost}).`);
-            ispaidcheck.checked  = false;
-            submitbtn.disabled   = true;
-            return;
-        }
-
-        if (currentfinecost > 0 && paid === currentfinecost) {
-            ispaidcheck.checked  = true;
-            ispaidcheck.disabled = true;
-        } else {
-            ispaidcheck.checked  = false;
-            ispaidcheck.disabled = false;
-        }
-
-        submitbtn.disabled = (paid <= 0 && currentfinecost > 0);
-    });
+    paidcostinput.addEventListener("input", recalculate);
 
     document.getElementById("fine-form").addEventListener("submit", function (e) {
-        const paid = parseFloat(paidcostinput.value) || 0;
-        if (paid > currentfinecost) {
+        const paying = parseFloat(paidcostinput.value) || 0;
+        if (paying > remainingAmt) {
             e.preventDefault();
-            showAlert(paidcosterror,
-                `Paid amount (₹${paid}) cannot exceed the fine cost (₹${currentfinecost}).`);
+            paidcosterror.textContent =
+                `₹${paying} exceeds the remaining balance of ₹${remainingAmt}.`;
+            paidcosterror.classList.remove("d-none");
         }
     });
-
 });
 
 function getCookie(name) {
-    let cookieValue = null;
+    let value = null;
     if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+        document.cookie.split(';').forEach(c => {
+            c = c.trim();
+            if (c.startsWith(name + '='))
+                value = decodeURIComponent(c.substring(name.length + 1));
+        });
     }
-    return cookieValue;
+    return value;
 }
 </script>
 {% endblock %}

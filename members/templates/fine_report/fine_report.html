@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Books{% endblock %}
+
+{% block content %}
+<div class="section-header mb-2">
+  <span class="section-title"><i class="bi bi-people me-2"></i>Fine Report</span>
+</div>
+
+<div class="lms-table">
+  <table class="table mb-0">
+    <thead>
+      <tr>
+        <th class="text-center">Sr No.</th>
+        <th class="text-center">Title</th>
+        <th class="text-center">Member Name</th>
+        <th class="text-center">Librarian Name</th>
+        <th class="text-center">Total Books Issued</th>
+        <th class="text-center">Overdue Date</th>
+        <th class="text-center">Paid Cost</th>
+        <th class="text-center">Fine Cost</th>
+        <th class="text-center">Paid</th>
+        <th class="text-center">Paid Time</th>
+      </tr>
+    </thead>
+  <tbody>
+    {% for fine in fine_report %}
+    <tr>
+      <td class="text-center">{{ forloop.counter }}</td>
+      <td class="text-center">{{ fine.book.title }}</td>
+      <td class="text-center">{{ fine.member.first_name }}</td>
+      <td class="text-center">{{ fine.librarian.name }}</td>
+      <td class="text-center">{{ fine.books_number }}</td>
+      <td class="text-center">{{ fine.overdue_date }}</td>
+      <td class="text-center">{{ fine.paid_cost }}</td>
+      <td class="text-center">{{ fine.fine_cost }}</td>
+      <td class="text-center">{{ fine.is_paid }}</td>
+      <td class="text-center">{{ fine.paid_time }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  </table>
+</div>
+
+{% endblock %}
