@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='bookdetails',
-            name='is_acitve',
+            name='is_active',
             field=models.BooleanField(default=True),
         ),
     ]

@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('members', '0008_bookdetails_is_acitve'),
+        ('members', '0008_bookdetails_is_active'),
     ]
 
     operations = [

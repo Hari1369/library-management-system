@@ -38,7 +38,7 @@ for row in issue_maintanence:
     book_total_copies = book["total_copies"] if book else None
     book_available_copies = book["available_copies"] if book else None
     book_category_id = book["category_id"] if book else None
-    book_is_acitve = book["is_acitve"] if book else None
+    book_is_active = book["is_active"] if book else None
     book_created_at = book["created_at"] if book else None
     book_publication_year = book["publication_year"] if book else None
 
@@ -83,7 +83,7 @@ for row in issue_maintanence:
     # print("BOOK TOTAL COPIES        :   ", book_total_copies)
     # print("BOOK AVAILABLE COPIES    :   ", book_available_copies)
     # print("BOOK CATEGORY ID         :   ", book_category_id)
-    # print("BOOK ACTIVE              :   ", book_is_acitve)
+    # print("BOOK ACTIVE              :   ", book_is_active)
     # print("BOOK CREATED AT          :   ", book_created_at)
 
     # print("=================================> LIBRARIAN DETAILS")

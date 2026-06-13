@@ -74,14 +74,14 @@ def dashboard_upper(request):
     overdue_books = FineMaintanence.objects.filter(is_return=False).count()
     total_issued_books = (IssueMaintanence.objects.filter(status="issued").aggregate(total=Sum("books_number"))["total"] or 0)
     issued_today = IssueMaintanence.objects.filter(status="issued", created_at__date=today).count()
-    # ================================>
-    print("TOTAL BOOKS          : ", total_books)
-    print("TOTAL MEMBERS        : ", total_members)
-    print("TOTAL FINE           : ", total_fine)
-    print("OVER DUE BOOKS       : ", overdue_books)
-    print("CURRENT ISSUED BOOKS : ", total_issued_books)
-    print("ISSUED TODAY         : ", issued_today)
-    # ================================>
+    # # ================================>
+    # print("TOTAL BOOKS          : ", total_books)
+    # print("TOTAL MEMBERS        : ", total_members)
+    # print("TOTAL FINE           : ", total_fine)
+    # print("OVER DUE BOOKS       : ", overdue_books)
+    # print("CURRENT ISSUED BOOKS : ", total_issued_books)
+    # print("ISSUED TODAY         : ", issued_today)
+    # # ================================>
     data = {
         "total_books": total_books,
         "total_members": total_members,
@@ -90,8 +90,43 @@ def dashboard_upper(request):
         "total_issued_books": total_issued_books,
         "issued_today": issued_today
     }
-
     return JsonResponse(data)
+
+
+
+def dashboard_book_data(request):
+    print("TRIGGER")
+    book_data_1 = (IssueMaintanence.objects.filter(issue_date__date=today).values("book__title","librarian__name","member__name","issue_date",).annotate(total_issued=Count("id")).order_by("-total_issued")[:5])
+    print("book DATA", book_data_1)
+    book_data_list = []
+    for item in book_data_1:
+        book_title = item["book__title"],
+        librarian_name = item["librarian__name"],
+        member_name = item["member__name"],
+        issue_date = item["issue_date"],
+        total_issued = item["total_issued"]
+
+        # ================================>
+        print("BOOK TITLE       : ", book_title)
+        print("LIBRARIAN        : ", librarian_name)
+        print("MEMBER NAME      : ", member_name)
+        print("ISSUED DATE      : ", issue_date)
+        print("TOTAL ISSUED     : ", total_issued)
+        # ================================>
+
+        book_data_list.append({
+            "book_title": book_title,
+            "librarian_name": librarian_name,
+            "member_name": member_name,
+            "issue_date": issue_date,
+            "total_issued": total_issued,
+        })
+
+    return JsonResponse({
+        "status": "success",
+        "book_data_list": book_data_list
+    })
+
 
 @login_required
 @role_required(["super_admin"])
@@ -616,7 +651,7 @@ def book_registration_page(request):
 @login_required
 @role_required(["super_admin", "librarian"])
 def book_details_page(request):
-    book_details = BookDetails.objects.filter(is_acitve=True).order_by("-updated_at")
+    book_details = BookDetails.objects.filter(is_active=True).order_by("-updated_at")
     categories = BookCategory.objects.all()
     book_details_list = []
 
@@ -741,8 +776,8 @@ def book_delete_request(request):
         # ================================>
         try:
             book = BookDetails.objects.get(isbn=isbn)
-            if book.is_acitve:
-                book.is_acitve = False
+            if book.is_active:
+                book.is_active = False
                 book.save()
 
                 return JsonResponse({
@@ -1035,6 +1070,27 @@ def record_report(request):
         "status": "success",
         "top_borrowed_books": result
     })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
