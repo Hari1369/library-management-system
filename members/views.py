@@ -767,7 +767,6 @@ def book_update_request(request):
             )
 
             message = "Book created successfully"
-
             if add_copies > 0:
                 message = (f"{add_copies} copies added successfully. " f"total copies are {book.total_copies}.")
 
