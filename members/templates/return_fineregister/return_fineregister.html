@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% block title %}Update Fine Maintenance{% endblock %}
+
+{% block content %}
+<div class="section-header mb-3">
+    <span class="section-title">
+        <i class="bi bi-pencil-square me-2"></i>Update Fine Maintenance
+    </span>
+</div>
+
+<div class="d-flex justify-content-center">
+    <div class="lms-card w-100">
+
+        <div id="fetch-alert" class="alert alert-warning d-none mb-3" role="alert"></div>
+        <div id="success-alert" class="alert alert-success d-none mb-3" role="alert"></div>
+
+        <form method="post" id="fine-form">
+            {% csrf_token %}
+            <input type="hidden" name="issue_id"    id="issue_id">
+            <input type="hidden" name="librarian"   id="librarian_id">
+            <input type="hidden" name="book"        id="book_id">
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="lms-form-label">Member <span class="text-danger">*</span></label>
+                    <select name="member" id="member-select"
+                            class="form-select select2 lms-form-control" required>
+                        <option value="">— Select Member —</option>
+                        {% for m in members %}
+                            <option value="{{ m.id }}">
+                                {{ m.first_name }}{% if m.last_name %} {{ m.last_name }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="lms-form-label">Librarian</label>
+                    <input type="text" id="librarian_display"
+                           class="form-control lms-form-control" readonly
+                           placeholder="Auto-filled on member select">
+                </div>
+                <div class="col-md-6">
+                    <label class="lms-form-label">Book</label>
+                    <input type="text" id="book_display"
+                           class="form-control lms-form-control" readonly
+                           placeholder="Auto-filled on member select">
+                </div>
+                <div class="col-md-6">
+                    <label class="lms-form-label">Fine Cost</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input type="number" name="fine_cost" id="fine_cost"
+                               class="form-control lms-form-control" readonly
+                               placeholder="Auto-calculated">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="lms-form-label">Paid Cost</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input type="number" name="paid_cost" id="paid_cost"
+                               class="form-control lms-form-control"
+                               placeholder="Enter amount paid" min="0" disabled>
+                    </div>
+                    <div id="paid-cost-error" class="text-danger small mt-1 d-none">
+                        Paid amount cannot exceed the fine cost.
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <div id="overdue_info" class="d-none">
+                        <span class="badge bg-danger fs-6">
+                            <i class="bi bi-clock-history me-1"></i>
+                            Overdue: <span id="overdue-days">0</span> day(s)
+                        </span>
+                    </div>
+                    <div id="no-overdue-info" class="d-none">
+                        <span class="badge bg-success fs-6">
+                            <i class="bi bi-check-circle me-1"></i>
+                            No overdue — Fine: ₹0
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-12">
+                    <div class="border rounded p-3 d-flex gap-5 align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" name="is_paid" id="is_paid"
+                                   style="width:18px; height:18px;" disabled>
+                            <label for="is_paid" class="lms-form-label mb-0">Is Paid</label>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="checkbox" name="is_returned" id="is_returned"
+                                   style="width:18px; height:18px;" disabled>
+                            <label for="is_returned" class="lms-form-label mb-0">Is Returned</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-lms-primary" id="submit-btn" disabled>
+                    <i class="bi bi-check-lg me-1"></i>Save Fine Record
+                </button>
+                <a href="{% url 'returns' %}" class="btn btn-lms-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var librariandisplay = document.getElementById("librarian_display");
+    var bookdisplay = document.getElementById("book_display");
+    var finecostInput = document.getElementById("fine_cost");
+    var paidcostinput = document.getElementById("paid_cost");
+    var overdueinfo = document.getElementById("overdue_info");
+    var nooverdueinfo = document.getElementById("no-overdue-info");
+    var overdueDays = document.getElementById("overdue-days");
+    var ispaidcheck = document.getElementById("is_paid");
+    var isreturnedcheck = document.getElementById("is_returned");
+    var submitbtn = document.getElementById("submit-btn");
+    var fetchalert = document.getElementById("fetch-alert");
+    var successalert = document.getElementById("success-alert");
+    var paidcosterror = document.getElementById("paid-cost-error");
+
+    var issueIdhidden = document.getElementById("issue_id");
+    var librarianidhidden = document.getElementById("librarian_id");
+    var bookIidhidden = document.getElementById("book_id");
+
+    var currentfinecost = 0;
+
+    function showAlert(el, msg) {
+        el.textContent = msg;
+        el.classList.remove("d-none");
+    }
+    function hideAlert(el) {
+        el.classList.add("d-none");
+        el.textContent = "";
+    }
+
+    function resetFields() {
+        librariandisplay.value  = "";
+        bookdisplay.value       = "";
+        finecostInput.value     = "";
+        paidcostinput.value     = "";
+        paidcostinput.disabled  = true;
+        ispaidcheck.checked     = false;
+        ispaidcheck.disabled    = true;
+        isreturnedcheck.checked = false;
+        isreturnedcheck.disabled= true;
+        overdueinfo.classList.add("d-none");
+        nooverdueinfo.classList.add("d-none");
+        submitbtn.disabled      = true;
+        issueIdhidden.value     = "";
+        librarianidhidden.value = "";
+        bookIidhidden.value      = "";
+        hideAlert(fetchalert);
+        hideAlert(paidcosterror);
+        currentfinecost = 0;
+    }
+
+    $('#member-select').on('select2:select', function (e) {
+        const memberId = e.params.data.id;
+        resetFields();
+
+        fetch("/get_member_issue_details/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken"),
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            body: JSON.stringify({ member_id: memberId })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("DATA : ", data)
+
+            issueIdhidden.value     = data.issue_id;
+            librarianidhidden.value = data.librarian_id;
+            bookIidhidden.value      = data.book_id;
+
+            librariandisplay.value = data.librarian_name;
+            bookdisplay.value      = data.book_title;
+            finecostInput.value    = data.fine_cost;
+            currentfinecost        = data.fine_cost;
+
+            if (data.overdue_days > 0) {
+                overdueDays.textContent = data.overdue_days;
+                overdueinfo.classList.remove("d-none");
+                nooverdueinfo.classList.add("d-none");
+            } else {
+                overdueinfo.classList.add("d-none");
+                nooverdueinfo.classList.remove("d-none");
+            }
+
+            paidcostinput.disabled   = false;
+            isreturnedcheck.disabled = false;
+
+            if (currentfinecost === 0) {
+                ispaidcheck.checked  = true;
+                ispaidcheck.disabled = false;
+                submitbtn.disabled   = false;
+            }
+
+            if (data.error) {
+                alert(data.error);
+                return;
+                
+            }
+        })
+        .catch(err => {
+            const msg = err.error || "No active issued book found for this member.";
+            showAlert(fetchalert, msg);
+            resetFields();
+        });
+    });
+
+    $('#member-select').on('select2:unselect', function () {
+        resetFields();
+    });
+
+    paidcostinput.addEventListener("input", function () {
+        const paid = parseFloat(this.value) || 0;
+        hideAlert(paidcosterror);
+
+        if (paid > currentfinecost) {
+            showAlert(paidcosterror,
+                `Paid amount (₹${paid}) cannot exceed the fine cost (₹${currentfinecost}).`);
+            ispaidcheck.checked  = false;
+            submitbtn.disabled   = true;
+            return;
+        }
+
+        if (currentfinecost > 0 && paid === currentfinecost) {
+            ispaidcheck.checked  = true;
+            ispaidcheck.disabled = true;
+        } else {
+            ispaidcheck.checked  = false;
+            ispaidcheck.disabled = false;
+        }
+
+        submitbtn.disabled = (paid <= 0 && currentfinecost > 0);
+    });
+
+    document.getElementById("fine-form").addEventListener("submit", function (e) {
+        const paid = parseFloat(paidcostinput.value) || 0;
+        if (paid > currentfinecost) {
+            e.preventDefault();
+            showAlert(paidcosterror,
+                `Paid amount (₹${paid}) cannot exceed the fine cost (₹${currentfinecost}).`);
+        }
+    });
+
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

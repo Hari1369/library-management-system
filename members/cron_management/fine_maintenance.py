@@ -57,7 +57,8 @@ for row in issue_maintanence:
 
     cur.execute("SELECT * FROM member_detail WHERE id = %s;", (maintanence_member_id,))
     member = cur.fetchone()
-    member_name = member["name"] if member else None
+    member_firstname = member["first_name"] if member else None
+    member_lastname = member["last_name"] if member else None
     member_email = member["email"] if member else None
     member_phone_number = member["phone_number"] if member else None
     member_address = member["address"] if member else None
@@ -87,7 +88,7 @@ for row in issue_maintanence:
     # print("BOOK CREATED AT          :   ", book_created_at)
 
     # print("=================================> LIBRARIAN DETAILS")
-    # print("LIBRARIAN NAME           :   ", member_name)
+    # print("LIBRARIAN NAME           :   ", member_firstname)
     # print("LIBRARIAN PASSWORD       :   ", librarian_password)
     # print("LIBRARIAN NAME           :   ", librarian_name)
     # print("LIBRARIAN SURNAME        :   ", librarian_surname)
@@ -99,7 +100,7 @@ for row in issue_maintanence:
     # print("LIBRARIAN CREATE AT      :   ", librarian_created_at)
 
     # print("=================================> MEMBER DETAILS")
-    # print("MEMBER USERNAME          :   ", member_name)
+    # print("MEMBER USERNAME          :   ", member_firstname)
     # print("MEMBER EMAIL             :   ", member_email)
     # print("MEMBER PHONE NUMBER      :   ", member_phone_number)
     # print("MEMBER ADDRESS           :   ", member_address)
@@ -111,7 +112,7 @@ for row in issue_maintanence:
         overdue_days  = (today - due_date).days
         fine_amount   = overdue_days * fine_per_day
 
-        # print(f"MEMBER USERNAME : {member_name}")
+        # print(f"MEMBER USERNAME : {member_firstname}")
         # print(f"OVER-DUE-DAYS   : {overdue_days}")
         # print(f"FINE DAYS       : {fine_amount}")
         # print("MAINTANANCE BOOK ID          : ", maintanence_book_id)

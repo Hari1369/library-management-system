@@ -4,6 +4,9 @@ from django.utils.timezone import now
 from .models import BookCategory, BookDetails
 from django.core.exceptions import ValidationError
 import datetime
+from .models import Librarian, Member, BookDetails
+
+
 
 CURRENT_YEAR = datetime.datetime.now().year
 
@@ -24,7 +27,8 @@ class LibrarianFrom(forms.Form):
     is_active = forms.BooleanField(required=False)
 
 class MemberFrom(forms.Form):
-    name = forms.CharField(max_length=255)
+    first_name = forms.CharField(max_length=255)
+    last_name = forms.CharField(max_length=255)
     email =forms.EmailField()
     phone_number = forms.CharField(max_length=25)
     address = forms.CharField(widget=forms.Textarea)
@@ -55,3 +59,13 @@ class BookForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-control year-select"})
     )
     total_copies = forms.IntegerField()
+
+
+class IssueMaintanenceForm(forms.Form):
+    librarian_id = forms.ModelChoiceField(queryset=Librarian.objects.all())
+    member_id = forms.ModelChoiceField(queryset=Member.objects.all(),required=False)
+    book_id = forms.ModelChoiceField(queryset=BookDetails.objects.all())
+    fine_cost = forms.IntegerField()
+    paid_cost = forms.IntegerField(required=False)
+    is_paid = forms.BooleanField(required=False)
+    is_return = forms.BooleanField(required=False)

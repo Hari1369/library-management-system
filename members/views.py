@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from django.http import JsonResponse
 from .models import Librarian, Member, BookDetails, BookCategory, IssueMaintanence, FineMaintanence
 from .serializers import LibrarianSerializers, MemberSerializers, BookDetailsSerializers
-from .forms import LoginForm, LibrarianFrom, BookCategoryForm, BookForm, MemberFrom
+from .forms import LoginForm, LibrarianFrom, BookCategoryForm, BookForm, MemberFrom, IssueMaintanenceForm
 from .decorators import role_required
 from django.contrib.auth.models import User
 from django.contrib import messages
@@ -485,19 +485,26 @@ def member_registration_page(request):
     if request.method == "POST":
         form = MemberFrom(request.POST)
         if form.is_valid():
-            name = form.cleaned_data["name"].title()
+            first_name = form.cleaned_data["first_name"].title()
+            last_name = form.cleaned_data["last_name"].title()
             email = form.cleaned_data["email"]
             phone_number = form.cleaned_data["phone_number"]
             address = form.cleaned_data["address"].title()
             membership_date = form.cleaned_data["membership_date"]
             is_active = form.cleaned_data["is_active"]
 
+            if not membership_date:
+                print("membership_date is empty or null")
+                messages.error(request, "membership_date is empty or null")
+                return redirect("member_registration")
+
             if membership_date < date.today():
                 messages.error(request, "Membership date cannot be in the past.")
                 return redirect("member_registration")
 
             # ================================>
-            print("NAME                 : ",  name)
+            print("FIRST NAME                 : ",  first_name)
+            print("LAST NAME                 : ",  last_name)
             print("EMAIL                : ",  email)
             print("PHONE NUMBER         : ",  phone_number)
             print("ADDRESS              : ",  address)
@@ -505,22 +512,22 @@ def member_registration_page(request):
             print("ACTIVE               : ",  is_active)
             # ================================>
 
-            if Member.objects.filter(name=name).exists():
-                messages.error(request, "Name already exists.")
+            if Member.objects.filter(first_name=first_name).exists():
+                messages.error(request, "Member already exists.")
                 return redirect("member_registration")
-
             
             try:
                 with transaction.atomic():
                     member_insert = Member.objects.create(
-                        name=name,
+                        first_name=first_name,
+                        last_name=last_name,
                         email=email,
                         phone_number=phone_number,
                         address=address,
                         membership_date=membership_date,
                         is_active=is_active,
                     )                 
-                messages.success(request, f"Member {name} inserted successfully!")
+                messages.success(request, f"Member {first_name} {last_name} inserted successfully!")
                 return redirect("member_registration")
 
             except IntegrityError:
@@ -537,7 +544,8 @@ def member_details_page(request):
     member_list = []
     for i in members:
         id = i.id
-        name = i.name.title()
+        first_name = i.first_name.title()
+        last_name = (i.last_name or "").title()
         email = i.email
         phone_number = i.phone_number
         address = i.address.title()
@@ -548,7 +556,8 @@ def member_details_page(request):
 
         # ================================>
         print("ID               : ", id)
-        print("NAME             : ", name)
+        print("FIRST NAME             : ", first_name)
+        print("LAST NAME             : ", last_name)
         print("EMAIL            : ", email)
         print("PHONE NUMBER     : ", phone_number)
         print("ADDRESS          : ", address)
@@ -560,7 +569,9 @@ def member_details_page(request):
 
         member_list.append({
             "id" : id,
-            "name" : name,
+            "first_name" : first_name,
+            "last_name" : last_name,
+            "address" : address,
             "email" : email,
             "phone_number" : phone_number,
             "membership_date": membership_date,
@@ -568,14 +579,15 @@ def member_details_page(request):
             "is_expired" : is_expired,
             "created_at" : created_at,
         })
-    return render(request, "member_details/member_details.html",  {"members": members})
+    return render(request, "member_details/member_details.html", {"members": member_list})
 
 @csrf_exempt
 def member_update_request(request):
     if request.method == "PUT":
         data = json.loads(request.body)
         member_id = data.get("id")
-        name = data.get("name").title()
+        first_name = data.get("first_name").title()
+        last_name = data.get("last_name").title()
         email = data.get("email")
         phone = data.get("phone")
         address = data.get("address")
@@ -594,7 +606,8 @@ def member_update_request(request):
             return render(request, "member_registration/member_registration.html", {"form": form, "error": "Membership date cannot be in the past."})  
         # ================================>
         print("ID                   :", member_id)
-        print("NAME                 :", name)
+        print("FIRST NAME                 :", first_name)
+        print("LAST NAME                 :", last_name)
         print("EMAIL                :", email)
         print("PHONE                :", phone)
         print("ADDRESSS             :", address)
@@ -603,10 +616,11 @@ def member_update_request(request):
 
         try:
             member = Member.objects.get(id=member_id)
-            if (member.name == name and member.email == email and member.phone_number == phone and member.address == address and member.membership_date == membership_date):
+            if (member.first_name == first_name and member.last_name == last_name and member.email == email and member.phone_number == phone and member.address == address and member.membership_date == membership_date):
                 return JsonResponse({"status": "error","message": "No changes detected. Data already up to date."})
 
-            member.name = name
+            member.first_name = first_name
+            member.last_name = last_name
             member.email = email
             member.phone_number = phone
             member.address = address
@@ -971,7 +985,7 @@ def borrow_records(request):
 @login_required
 @role_required(["super_admin", "librarian"])
 def borrow_records_register(request):
-    member = Member.objects.values("id", "name").order_by("name")
+    member = Member.objects.values("id", "first_name", "last_name").order_by("first_name")
     books = BookDetails.objects.values("id", "title", "available_copies").order_by("title")
     if request.method == "POST":
         role = request.session.get("role")
@@ -1163,9 +1177,9 @@ def record_report(request):
     for book in top_books:
         book_id = book["book_id"]
 
-        top_member_row = (IssueMaintanence.objects.filter(book_id=book_id).values("member__name").annotate(total=Count("id")).order_by("-total").first())
+        top_member_row = (IssueMaintanence.objects.filter(book_id=book_id).values("member__first_name").annotate(total=Count("id")).order_by("-total").first())
         if top_member_row:
-            top_member = top_member_row["member__name"]
+            top_member = top_member_row["member__first_name"]
         else:
             top_member = None
         latest_issue = (IssueMaintanence.objects.filter(book_id=book_id).select_related("librarian", "member").order_by("-issue_date").first())
@@ -1210,14 +1224,243 @@ def record_report(request):
 
 
 
+# @login_required
+# @role_required(["super_admin", "librarian"])
+# def return_fineregister(request):
+#     if request.method == "POST":
+#         librarian = request.POST.get("librarian")
+#         member = request.POST.get("member")
+#         book = request.POST.get("book")
+#         fine_cost = request.POST.get("fine_cost")
+#         paid_cost = request.POST.get("paid_cost")
+
+#         is_paid = "is_paid" in request.POST
+#         is_returned = "is_returned" in request.POST
+
+#         print(librarian)
+#         print(member)
+#         print(book)
+#         print(fine_cost)
+#         print(paid_cost)
+#         print(is_paid)
+#         print(is_returned)
+
+#         # Here you can save data into database
+#         # FineMaintanence.objects.create(
+#         #     librarian=librarian,
+#         #     member=member,
+#         #     book=book,
+#         #     fine_cost=fine_cost,
+#         #     paid_cost=paid_cost,
+#         #     is_paid=is_paid,
+#         #     is_returned=is_returned
+#         # )
+
+#     return render(
+#         request,
+#         "return_fineregister/return_fineregister.html"
+#     )
+
+
+
+def get_member_issue_details(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    try:
+        data = json.loads(request.body)
+        member_id = data.get("member_id")
+    except (json.JSONDecodeError, AttributeError):
+        return JsonResponse({"error": "Invalid JSON body"}, status=400)
+
+    if not member_id:
+        return JsonResponse({"error": "No member_id provided"}, status=400)
+
+    fine_record = (FineMaintanence.objects.filter(member_id=member_id, is_paid=False).select_related("librarian", "book").order_by("-created_at").first()
+)
+
+    if fine_record:
+        today        = date.today()
+        overdue_date = fine_record.overdue_date
+        overdue_days = max((today - overdue_date).days, 0) if overdue_date else 0
+        issue = (IssueMaintanence.objects.filter(member_id=member_id, book_id=fine_record.book_id, status="issued").order_by("-issue_date").first())
+        if issue:
+            issue_id = issue.id
+        else:
+            issue_id = None
+        return JsonResponse({
+            "issue_id":       issue.id,
+            "fine_record_id": fine_record.id,
+            "librarian_id":   fine_record.librarian.id,
+            "librarian_name": f"{fine_record.librarian.name} {fine_record.librarian.surname}",
+            "book_id":        fine_record.book.id,
+            "book_title":     fine_record.book.title,
+            "fine_cost":      fine_record.fine_cost,
+            "overdue_days":   overdue_days,
+        })
+
+    try:
+        issue = (IssueMaintanence.objects.filter(member_id=member_id, status="issued").select_related("librarian", "book").latest("issue_date"))
+    except IssueMaintanence.DoesNotExist:
+        return JsonResponse({"error": "This member has not been issued any books."})
+    today        = date.today()
+    due_date     = issue.due_date.date() if issue.due_date else None
+    overdue_days = max((today - due_date).days, 0) if due_date else 0
+    fine_cost    = overdue_days * 10
+
+    return JsonResponse({
+        "issue_id":       issue.id,
+        "fine_record_id": None,
+        "librarian_id":   issue.librarian.id,
+        "librarian_name": f"{issue.librarian.name} {issue.librarian.surname}",
+        "book_id":        issue.book.id,
+        "book_title":     issue.book.title,
+        "fine_cost":      fine_cost,
+        "overdue_days":   overdue_days,
+    })
+
+
+@login_required
+@role_required(["super_admin", "librarian"])
+def return_fineregister(request):
+    members = Member.objects.filter(is_active=True)
+    if request.method == "POST":
+        member_id = request.POST.get("member")
+        issue_id = request.POST.get("issue_id")
+        fine_record_id = request.POST.get("fine_record_id")
+        librarian_id = request.POST.get("librarian")
+        book_id = request.POST.get("book")
+        fine_cost = request.POST.get("fine_cost") or 0
+        paid_cost = request.POST.get("paid_cost") or 0
+        is_paid = "is_paid"     in request.POST
+        is_return = "is_returned" in request.POST
+
+        try:
+            fine_cost = int(fine_cost)
+            paid_cost = int(paid_cost)
+        except ValueError:
+            return render(request, "return_fineregister/return_fineregister.html", {"members": members,"error": "Invalid fine or paid cost value!",})
+
+        if paid_cost > fine_cost:
+            return render(request, "return_fineregister/return_fineregister.html", {"members": members,"error": "Paid cost cannot exceed the fine cost!"})
+
+        if fine_cost > 0 and paid_cost == fine_cost:
+            print("Found")
+            is_paid = True
+        else:
+            is_paid = False
+
+        if is_paid:
+            paid_time = now()
+        else:
+            paid_time = None
+
+
+        try:
+            if fine_record_id:
+                FineMaintanence.objects.filter(id=fine_record_id).update(paid_cost = paid_cost,is_paid = is_paid, is_return = is_return, paid_time = paid_time,)
+            else:
+                if fine_cost > 0:
+                    overdue_date = date.today()
+                else:
+                    overdue_date = None
+
+                FineMaintanence.objects.create(
+                    librarian_id = librarian_id,
+                    member_id = member_id,
+                    book_id = book_id,
+                    fine_cost = fine_cost,
+                    paid_cost = paid_cost,
+                    is_paid = is_paid,
+                    is_return = is_return,
+                    overdue_date = overdue_date,
+                    paid_time = paid_time,
+                )
+
+            if issue_id and is_return:
+                print("1")
+                IssueMaintanence.objects.filter(id=issue_id).update(status = "returned",return_date = date.today(),)
+            return redirect("return_fineregister")
+
+        except Exception as e:
+            print("Something went wrong")
+            return render(request, "return_fineregister/return_fineregister.html", {
+                "members": members,
+                "error":   "Something went wrong while saving. Please try again.",
+            })
+    return render(request, "return_fineregister/return_fineregister.html", {"members": members,})
+
+
+# def get_member_issue_details(request):
+#     if request.method == "POST":
+#         data = json.loads(request.body)
+#         member_id = data.get("member_id")
+#         if not member_id:
+#             return JsonResponse({"error": "No member id provided"}, status=400)
+#         try:
+#             issue = IssueMaintanence.objects.filter(member_id=member_id,status="issued").select_related("librarian", "book").latest("issue_date")
+#             print("ISSUE : ", issue)
+#         except IssueMaintanence.DoesNotExist:
+#             return JsonResponse({"error": "No active issue found for this member"}, status=404)
+
+#         today = date.today()
+#         due_date = issue.due_date.date() if issue.due_date else None
+#         if due_date:
+#             overdue_days = max((today - due_date).days, 0)
+#         else:
+#             overdue_days = 0
+#         fine_cost = overdue_days * 10
+
+#         return JsonResponse({
+#             "librarian_id":   issue.librarian.id,
+#             "librarian_name": f"{issue.librarian.name} {issue.librarian.surname}",
+#             "book_id":        issue.book.id,
+#             "book_title":     issue.book.title,
+#             "fine_cost":      fine_cost,
+#             "overdue_days":   overdue_days,
+#             "issue_id":       issue.id,
+#         })
 
 
 
 
+# @login_required
+# @role_required(["super_admin", "librarian"])
+# def return_fineregister(request):
+#     members = Member.objects.filter(is_active=True)
 
+#     # if request.method == "POST":
+#     #     member_id  = request.POST.get("member")
+#     #     issue_id   = request.POST.get("issue_id")
+#     #     librarian_id = request.POST.get("librarian")
+#     #     book_id    = request.POST.get("book")
+#     #     fine_cost  = request.POST.get("fine_cost")
+#     #     paid_cost  = request.POST.get("paid_cost")
+#     #     is_paid    = "is_paid"     in request.POST
+#     #     is_return  = "is_returned" in request.POST
 
+#     #     try:
+#     #         FineMaintanence.objects.create(
+#     #             librarian_id = librarian_id,
+#     #             member_id    = member_id,
+#     #             book_id      = book_id,
+#     #             fine_cost    = fine_cost,
+#     #             paid_cost    = paid_cost or 0,
+#     #             is_paid      = is_paid,
+#     #             is_return    = is_return,
+#     #         )
+#     #         # Mark the issue as returned
+#     #         if issue_id and is_return:
+#     #             IssueMaintanence.objects.filter(id=issue_id).update(
+#     #                 status="returned",
+#     #                 return_date=date.today()
+#     #             )
+#     #         return redirect("return_fineregister")   # adjust to your URL name
+#     #     except Exception as e:
+#     #         print("Error saving fine record:", e)
 
-
+#     return render(request, "return_fineregister/return_fineregister.html", {
+#         "members": members,
+#     })
 
 
 
@@ -1369,3 +1612,4 @@ def books_api(request):
             {"message": "Book deleted successfully"},
             status=200
         )     
+

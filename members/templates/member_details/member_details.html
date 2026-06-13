@@ -20,7 +20,8 @@
   <thead>
     <tr>
       <th class="text-center">Sr No.</th>
-      <th class="text-center">Name</th>
+      <th class="text-center">First Name</th>
+      <th class="text-center">Last Name</th>
       <th class="text-center">Email</th>
       <th class="text-center">Phone Number</th>
       <th class="text-center">Address</th>
@@ -36,7 +37,8 @@
     {% for member in members %}
     <tr>
       <td class="text-center">{{ forloop.counter }}</td>
-      <td class="text-center">{{ member.name }}</td>
+      <td class="text-center">{{ member.first_name }}</td>
+      <td class="text-center">{{ member.last_name }}</td>
       <td class="text-center">{{ member.email }}</td>
       <td class="text-center">{{ member.phone_number }}</td>
       <td class="text-center">{{ member.address }}</td>
@@ -64,7 +66,8 @@
         <button class="btn btn-primary btn-sm"
           onclick="submit_data(
             '{{ member.id }}',
-            '{{ member.name|escapejs }}',
+            '{{ member.first_name|escapejs }}',
+            '{{ member.last_name|escapejs }}',
             '{{ member.email|escapejs }}',
             '{{ member.phone_number|escapejs }}',
             '{{ member.address|escapejs }}',
@@ -78,7 +81,7 @@
       <td class="text-center">
         <button class="btn btn-danger btn-sm" onclick="del_data(
             '{{ member.id }}',
-            '{{ member.name|escapejs }}',
+            '{{ member.first_name|escapejs }}',
             '{{ member.email|escapejs }}',
             '{{ member.is_active }}',
           )">
@@ -108,8 +111,13 @@
         <input type="hidden" id="member_id">
 
         <div class="mb-2">
-          <label>Name</label>
-          <input type="text" id="member_name" class="form-control">
+          <label>First Name</label>
+          <input type="text" id="member_firstname" class="form-control">
+        </div>
+
+        <div class="mb-2">
+          <label>Last Name</label>
+          <input type="text" id="member_lastname" class="form-control">
         </div>
 
         <div class="mb-2">
@@ -146,10 +154,11 @@
 
 <!-- Pagination -->
 <script>
-window.submit_data = function(id, name, email, phone, address, membership_date, is_active, created_at) {
+window.submit_data = function(id, first_name, last_name, email, phone, address, membership_date, is_active, created_at) {
   // ========================================> 
   console.log("ID               : ", id);
-  console.log("NAME             : ", name);
+  console.log("FIRST NAME             : ", first_name);
+  console.log("LAST NAME             : ", last_name);
   console.log("EMAIL            : ", email);
   console.log("PHONE            : ", phone);
   console.log("ADDRESS          : ", address);
@@ -159,7 +168,8 @@ window.submit_data = function(id, name, email, phone, address, membership_date, 
   // ========================================> 
 
   document.getElementById("member_id").value = id;
-  document.getElementById("member_name").value = name;
+  document.getElementById("member_firstname").value = first_name;
+  document.getElementById("member_lastname").value = last_name;
   document.getElementById("member_email").value = email;
   document.getElementById("member_phone").value = phone;
   document.getElementById("member_address").value = address;
@@ -173,7 +183,8 @@ window.submit_data = function(id, name, email, phone, address, membership_date, 
 
 window.save_member = async function() {
   var id = document.getElementById("member_id").value;
-  var name = document.getElementById("member_name").value;
+  var first_name = document.getElementById("member_firstname").value;
+  var last_name = document.getElementById("member_lastname").value;
   var email = document.getElementById("member_email").value;
   var phone = document.getElementById("member_phone").value;
   var address = document.getElementById("member_address").value;
@@ -184,8 +195,13 @@ window.save_member = async function() {
     return;
   }
 
-  if (!name) {
-    alert("Name is required");
+  if (!first_name) {
+    alert("First Name is required");
+    return;
+  }
+
+  if (!last_name) {
+    alert("Last Name is required");
     return;
   }
 
@@ -204,15 +220,16 @@ window.save_member = async function() {
     return;
   }
 
-  if (!membership_date) {
-    alert("Membership date is required");
-    return;
-  }
+  // if (!membership_date) {
+  //   alert("Membership date is required");
+  //   return;
+  // }
 
 
   // ========================================> 
   console.log("ID               : ", id);
-  console.log("NAME             : ", name);
+  console.log("FIRST NAME             : ", first_name);
+  console.log("LAST NAME             : ", last_name);
   console.log("EMAIL            : ", email);
   console.log("PHONE            : ", phone);
   console.log("ADDRESS          : ", address);
@@ -221,7 +238,8 @@ window.save_member = async function() {
 
   const formData = {
     id,
-    name,
+    first_name,
+    last_name,
     email,
     phone,
     address,
