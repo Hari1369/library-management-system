@@ -688,7 +688,7 @@ def book_details_page(request):
 @csrf_exempt
 def book_update_request(request):
     print("HELLOW")
-    if request.method == "POST":
+    if request.method == "PUT":
         data = json.loads(request.body)
         isbn = data.get("isbn")
         title = data.get("title")
@@ -699,6 +699,7 @@ def book_update_request(request):
         add_copies = int(add_copies) if add_copies not in [None, ""] else 0
         total_copies = data.get("total_copies")
         available_copies = data.get("available_copies")
+
 
         # ================================>
         print("ISBN             :", isbn)
@@ -719,6 +720,10 @@ def book_update_request(request):
                     "message": "No changes detected. Please update something before saving."
                 })
 
+            copies_added_flag = False
+            added_copies_value = 0
+
+
             if data.get("title"):
                 book.title = data.get("title")
 
@@ -734,12 +739,20 @@ def book_update_request(request):
             if add_copies > 0:
                 book.total_copies += add_copies
                 book.available_copies += add_copies
+                
+                copies_added_flag = True
+                added_copies_value = add_copies
+
 
             book.save()
+            message = "Book updated successfully"
+
+            if copies_added_flag:
+                message = (f"{added_copies_value} copies added successfully. " f"now total copies are {book.total_copies}.")
 
             return JsonResponse({
                 "status": "success",
-                "message": "Book updated successfully"
+                "message": message
             })
 
         except BookDetails.DoesNotExist:
@@ -752,6 +765,12 @@ def book_update_request(request):
                 total_copies=add_copies,
                 available_copies=add_copies
             )
+
+            message = "Book created successfully"
+
+            if add_copies > 0:
+                message = (f"{add_copies} copies added successfully. " f"total copies are {book.total_copies}.")
+
 
             return JsonResponse({
                 "status": "success",
@@ -768,7 +787,7 @@ def book_update_request(request):
 
 @csrf_exempt
 def book_delete_request(request):
-    if request.method == "POST":
+    if request.method == "DELETE":
         data = json.loads(request.body)
         isbn = data.get("isbn")
         # ================================>
