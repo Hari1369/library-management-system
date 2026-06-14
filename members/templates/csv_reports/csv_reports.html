@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Books{% endblock %}
+
+{% block content %}
+<div class="section-header mb-2">
+  <span class="section-title"><i class="bi bi-people me-2"></i>All Books</span>
+  <a href="{% url 'book_registration' %}" class="btn btn-lms-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>Add Book
+  </a>
+</div>

@@ -7,14 +7,13 @@
       <i class="bi bi-arrow-left-right me-2"></i>Borrow Records
     </span>
   </div>
-
   <form method="GET" class="row g-2">
     <div class="col-md-3">
       <select name="member" class="form-select">
         <option value="">All Members</option>
         {% for m in members %}
           <option value="{{ m.id }}" {% if request.GET.member == m.id|stringformat:"s" %}selected{% endif %}>
-            {{ m.name }}
+            {{ m.first_name }} {{ m.last_name }}
           </option>
         {% endfor %}
       </select>
@@ -44,11 +43,6 @@
 
   </form>
 
-<!-- Search -->
-<div class="mb-3">
-
-</div>
-<!-- Table -->
 <div class="lms-table">
 <table class="table mb-0">
   <thead>
@@ -63,24 +57,20 @@
       <th>Created At</th>
     </tr>
   </thead>
-
   <tbody>
     {% for record in issuemaintenance %}
     <tr>
       <td>{{ record.book.title }}</td>
-      <td>{{ record.member.name }}</td>
+      <td>{{ record.member.first_name }}</td>
       <td>{{ record.librarian.name }} {{ record.librarian.surname }}</td>
       <td>{{ record.books_number }}</td>
       <td>
         {% if record.status == "issued" %}
           <span class="status-issued">{{ record.status }}</span>
-
         {% elif record.status == "returned" %}
           <span class="status-returned">{{ record.status }}</span>
-
         {% elif record.status == "overdue" %}
           <span class="status-overdue">{{ record.status }}</span>
-
         {% else %}
           <span>{{ record.status }}</span>
         {% endif %}

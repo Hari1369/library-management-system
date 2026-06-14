@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_crontab',
     "rest_framework",
     'members'
 ]
@@ -87,6 +88,9 @@ DATABASES = {
     }
 }
 
+CRONJOBS = [
+    ('0 0 * * *', 'members.cron_management.fine_maintenance.run', '>> /tmp/fine_maintenance.log 2>&1'),
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -118,6 +122,14 @@ USE_I18N = True
 
 USE_TZ = True
 
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'hiranmaymondal369@gmail.com'
+EMAIL_HOST_PASSWORD = 'akvq pgzv vqus cvsb'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/

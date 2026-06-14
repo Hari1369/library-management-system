@@ -1,5 +1,8 @@
+from django.contrib.auth.models import User
 from django.db import models
-
+from django.utils import timezone
+from datetime import timedelta
+import random
 
 class Librarian(models.Model):
     username = models.CharField(max_length=255, unique=True)
@@ -107,3 +110,24 @@ class NotificationRecord(models.Model):
         db_table = "notifications"
     def __str__(self):
         return f"({self.user}) ({self.message}) ({self.created_at}) ({self.status})"
+
+
+class PasswordResetOTP(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reset_otps")
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+    is_used = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(minutes=10)
+
+    @staticmethod
+    def generate_otp():
+        return str(random.randint(100000, 999999))
+
+    def __str__(self):
+        return f"{self.user.username} - {self.otp}"

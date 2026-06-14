@@ -50,3 +50,12 @@ VALUES
 | `paid_time`     | `NULL`                     | ✅ No payment has happened yet, so no payment date/time      |
 | `updated_at`    | `NOW()`                    | ⚠️ Current timestamp during insertion                       |
 | `overdue_date`  | `due_date`                 | ✅ The date after which the fine started accumulating        |
+
+# Add/update cron jobs
+python manage.py crontab add
+
+# Verify it's registered
+python manage.py crontab show
+
+# To remove later
+python manage.py crontab remove

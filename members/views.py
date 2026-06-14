@@ -1,13 +1,14 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.db import transaction, IntegrityError
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.views.decorators.http import require_POST
 from django.http import JsonResponse
-from .models import Librarian, Member, BookDetails, BookCategory, IssueMaintanence, FineMaintanence
+from .models import Librarian, Member, BookDetails, BookCategory, IssueMaintanence, FineMaintanence, PasswordResetOTP
 from .serializers import LibrarianSerializers, MemberSerializers, BookDetailsSerializers
 from .forms import LoginForm, LibrarianFrom, BookCategoryForm, BookForm, MemberFrom, IssueMaintanenceForm
 from .decorators import role_required
@@ -18,6 +19,8 @@ from django.db.models import Sum, Count, Max, Sum
 from django.db.models import F
 from django.utils import timezone
 from django.utils.timezone import now
+from django.core.mail import send_mail
+from django.conf import settings
 import json
 today = timezone.now().date()
 
@@ -98,12 +101,12 @@ def dashboard_upper(request):
 
 def dashboard_book_data(request):
     print("TRIGGER 1 ")
-    book_data_1 = (IssueMaintanence.objects.filter(issue_date__date=today).values("book__title","librarian__name","member__name","issue_date","member__is_active","member__created_at",).annotate(total_issued=Count("id")).order_by("-total_issued")[:5])
+    book_data_1 = (IssueMaintanence.objects.filter(issue_date__date=today).values("book__title","librarian__name","member__first_name","member__last_name","issue_date","member__is_active","member__created_at",).annotate(total_issued=Count("id")).order_by("-total_issued")[:5])
     book_data_list = []
     for item in book_data_1:
         book_title = item["book__title"]
         librarian_name = item["librarian__name"]
-        member_name = item["member__name"]
+        member_name = f"{item['member__first_name']} {item['member__last_name'] or ''}".strip()
         issue_date = item["issue_date"]
         total_issued = item["total_issued"]
         member_is_active = item["member__is_active"]
@@ -1605,10 +1608,12 @@ def return_fineregister(request):
                 "members": members,
                 "error":   "Something went wrong while saving. Please try again.",
             })
-
     return render(request, "return_fineregister/return_fineregister.html", {"members": members})
 
 
+
+def csv_report(request):
+    return render(request, "csv_reports/csv_reports.html")
 
 
 # def get_member_issue_details(request):
@@ -1686,6 +1691,123 @@ def return_fineregister(request):
 
 
 
+def password_reset(request):
+    return render(request, "forgot_password/forgot_password.html")
+
+
+@require_POST
+def generate_otp(request):
+    try:
+        data = json.loads(request.body)
+        email = data.get("email", "").strip().lower()
+
+        # ========================================>
+        print("1")
+        print("EMAIL : ", email)
+        # ========================================>
+
+        if not email:
+            return JsonResponse({"error": "Email is required"}, status=400)
+
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return JsonResponse({"error": "No account found with this email"}, status=404)
+
+        otp = PasswordResetOTP.generate_otp()
+        print("OTP : ", otp)
+        PasswordResetOTP.objects.filter(user=user).delete()
+        PasswordResetOTP.objects.create(user=user, otp=otp)
+
+        send_mail(
+            subject="Your Password Reset OTP",
+            message=f"Your OTP for password reset is: {otp}\nThis OTP is valid for 10 minutes.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        return JsonResponse({"message": "OTP sent successfully"}, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@require_POST
+def verify_otp(request):
+    try:
+        data = json.loads(request.body)
+        email = data.get("email", "").strip().lower()
+        otp = data.get("otp", "").strip()
+
+        # ======================================>
+        print("2")
+        print("EMAIL : ", email)
+        print("OTP : ", otp)
+        # ======================================>
+
+
+        if not email or not otp:
+            return JsonResponse({"error": "Email and OTP are required"}, status=400)
+
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return JsonResponse({"error": "Invalid request"}, status=404)
+
+        otp_data = PasswordResetOTP.objects.filter(user=user, otp=otp).first()
+
+        if not otp_data:
+            return JsonResponse({"error": "Invalid OTP"}, status=400)
+
+        if otp_data.is_expired():
+            otp_data.delete()
+            return JsonResponse({"error": "OTP expired. Please request a new one."}, status=400)
+
+        otp_data.is_verified = True
+        otp_data.save()
+
+        return JsonResponse({"message": "OTP verified successfully"}, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@require_POST
+def reset_password(request):
+    try:
+        data = json.loads(request.body)
+        email = data.get("email", "").strip().lower()
+        new_password = data.get("new_password", "")
+
+        if not email or not new_password:
+            return JsonResponse({"error": "Email and new password are required"}, status=400)
+        if len(new_password) < 4:
+            return JsonResponse({"error": "Password must be at least 8 characters"}, status=400)
+
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return JsonResponse({"error": "Invalid request"}, status=404)
+
+        otp_data = PasswordResetOTP.objects.filter(user=user, is_verified=True).first()
+
+        if not otp_data:
+            return JsonResponse({"error": "OTP verification required before resetting password!"}, status=403)
+
+        if otp_data.is_expired():
+            otp_data.delete()
+            return JsonResponse({"error": "Session expired. Please restart the process!"}, status=400)
+
+        user.set_password(new_password)
+        user.save()
+
+        librarian = Librarian.objects.filter(email=email).first()
+        if librarian:
+            librarian.password = new_password
+            librarian.save()
+
+        PasswordResetOTP.objects.filter(user=user).delete()
+        return JsonResponse({"message": "Password reset successful"}, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 

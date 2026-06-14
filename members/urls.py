@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import login_page, logout_page, dashboard_page, dashboard_upper, dashboard_book_data, dashboard_lowest_books, get_member_issue_details, return_fineregister, dashboard_total_activemember, dashboard_total_inactivemember,  librarian_registration_page, member_registration_page, book_registration_page, book_category_registration_page, book_details_page, member_details_page, librarian_details_page, member_update_request, librarian_update_request, book_update_request, member_delete_request, librarian_delete_request, book_delete_request, member_api, finereport, books_api, borrow_records, borrow_returns, borrow_records_register, record_report, return_fineregister
+from .views import login_page, logout_page, dashboard_page, dashboard_upper, csv_report, password_reset, generate_otp, reset_password, verify_otp, dashboard_book_data, dashboard_lowest_books, get_member_issue_details, return_fineregister, dashboard_total_activemember, dashboard_total_inactivemember,  librarian_registration_page, member_registration_page, book_registration_page, book_category_registration_page, book_details_page, member_details_page, librarian_details_page, member_update_request, librarian_update_request, book_update_request, member_delete_request, librarian_delete_request, book_delete_request, member_api, finereport, books_api, borrow_records, borrow_returns, borrow_records_register, record_report, return_fineregister
 
 urlpatterns = [
     path("", login_page, name="log_in"),
@@ -43,6 +43,15 @@ urlpatterns = [
     path("get_member_issue_details/", get_member_issue_details, name="get_member_issue_details"),
     
 
+
+    path("export_csv/", csv_report, name="export_csv"),
+
+
+
+    path("password_reset/", password_reset, name="password_reset"),
+    path("generate_otp/", generate_otp, name="generate_otp"),
+    path("verify_otp/", verify_otp, name="verify_otp"),
+    path("reset_password/", reset_password, name="reset_password"),
 
 
 
