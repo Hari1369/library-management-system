@@ -82,7 +82,7 @@ WSGI_APPLICATION = 'library_system.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "library_test",
+        "NAME": "test",
         "USER": "quantumd",
         "PASSWORD": "admlqq",
         "HOST": "127.0.0.1",
