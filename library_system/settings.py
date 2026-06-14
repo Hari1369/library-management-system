@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_crontab',
     "rest_framework",
+    'django_celery_beat',
     'members'
 ]
 
@@ -92,6 +94,19 @@ CRONJOBS = [
     ('0 0 * * *', 'members.cron_management.fine_maintenance.run', '>> /tmp/fine_maintenance.log 2>&1'),
 ]
 
+# ── Celery Configuration ──────────────────────────────
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_TIMEZONE = 'Asia/Kolkata'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+CELERY_BEAT_SCHEDULE = {
+    'fine-maintenance-midnight': {
+        'task': 'members.tasks.run_fine_maintenance',
+        'schedule': 30.0, 
+        # 'schedule': crontab(hour=0, minute=0),
+    },
+}
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
@@ -116,7 +131,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'         # match both
+CELERY_TIMEZONE = 'Asia/Kolkata'
+USE_TZ = True
 
 USE_I18N = True
 
