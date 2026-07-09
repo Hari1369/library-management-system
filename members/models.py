@@ -16,6 +16,7 @@ class Librarian(models.Model):
     is_shown = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    update_requested_at = models.DateTimeField(null=True, blank=True)
     class Meta:
         db_table = "librarian_details"
     def __str__(self):

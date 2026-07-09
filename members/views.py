@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.contrib.auth.hashers import make_password
 from django.http import HttpResponse
 from django.db import transaction, IntegrityError
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
@@ -24,7 +25,6 @@ from django.conf import settings
 import json
 today = timezone.now().date()
 
-
 def login_page(request):
     form = LoginForm()
     if request.method == "POST":
@@ -32,34 +32,93 @@ def login_page(request):
         if form.is_valid():
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
-            # ================================>
-            print("USERNAME : ", username)
-            print("PASSWORD : ", password)
-            # ================================>
+
+            print("USERNAME :", username)
+            print("PASSWORD :", password)
+
             user = authenticate(request, username=username, password=password)
-            librarian = Librarian.objects.filter(username=username,is_active=True).first()
+            librarian = Librarian.objects.filter(username=username).first()
+
+            if librarian and librarian.update_requested_at:
+                if timezone.now().date() > librarian.update_requested_at.date():
+                    librarian.is_active = False
+                    librarian.save()
+
+                    if user:
+                        user.is_active = False
+                        user.save()
+
+                    messages.error(
+                        request,
+                        "Your account has been temporarily disabled. Please wait for administrator approval."
+                    )
+                    return render(request, "log_in/log_in.html", {"form": form})
 
             if user is not None:
-                login(request, user)
-                request.session["id"] = user.id
-                request.session["username"] = user.username
                 if not user.is_active:
                     messages.error(request, "Account disabled.")
                     return render(request, "log_in/log_in.html", {"form": form})
+
+                login(request, user)
+
+                request.session["id"] = user.id
+                request.session["username"] = user.username
+
                 if user.is_superuser and user.is_staff:
                     request.session["superuser_id"] = user.id
                     request.session["role"] = "super_admin"
-                elif librarian:
+
+                elif librarian and librarian.is_active:
                     request.session["librarian_id"] = librarian.id
                     request.session["role"] = "librarian"
+
                 else:
                     messages.error(request, "Unauthorized role.")
                     return render(request, "log_in/log_in.html", {"form": form})
 
                 return redirect("dashboard_page")
+
             else:
                 messages.error(request, "Invalid username or password.")
+
     return render(request, "log_in/log_in.html", {"form": form})
+
+
+# def login_page(request):
+#     form = LoginForm()
+#     if request.method == "POST":
+#         form = LoginForm(request.POST)
+#         if form.is_valid():
+#             username = form.cleaned_data["username"]
+#             password = form.cleaned_data["password"]
+#             # ================================>
+#             print("USERNAME : ", username)
+#             print("PASSWORD : ", password)
+#             # ================================>
+#             user = authenticate(request, username=username, password=password)
+#             librarian = Librarian.objects.filter(username=username,is_active=True).first()
+
+#             if user is not None:
+#                 login(request, user)
+#                 request.session["id"] = user.id
+#                 request.session["username"] = user.username
+#                 if not user.is_active:
+#                     messages.error(request, "Account disabled.")
+#                     return render(request, "log_in/log_in.html", {"form": form})
+#                 if user.is_superuser and user.is_staff:
+#                     request.session["superuser_id"] = user.id
+#                     request.session["role"] = "super_admin"
+#                 elif librarian:
+#                     request.session["librarian_id"] = librarian.id
+#                     request.session["role"] = "librarian"
+#                 else:
+#                     messages.error(request, "Unauthorized role.")
+#                     return render(request, "log_in/log_in.html", {"form": form})
+
+#                 return redirect("dashboard_page")
+#             else:
+#                 messages.error(request, "Invalid username or password.")
+#     return render(request, "log_in/log_in.html", {"form": form})
 
 
 def logout_page(request):
@@ -330,17 +389,17 @@ def librarian_details_page(request):
         is_active = user.is_active
         created_at = user.created_at
 
-        # ================================>
-        print("ID               : ", id)
-        print("USERNAME         : ", username)
-        print("PASSWORD         : ", password)
-        print("NAME             : ", name)
-        print("SURNAME          : ", surname)
-        print("EMAIL            : ", email)
-        print("PHONE NUMBER     : ", phone_number)
-        print("ADDRESS          : ", address)
-        print("IS ACTIVE        : ", is_active)
-        # ================================>
+        # # ================================>
+        # print("ID               : ", id)
+        # print("USERNAME         : ", username)
+        # print("PASSWORD         : ", password)
+        # print("NAME             : ", name)
+        # print("SURNAME          : ", surname)
+        # print("EMAIL            : ", email)
+        # print("PHONE NUMBER     : ", phone_number)
+        # print("ADDRESS          : ", address)
+        # print("IS ACTIVE        : ", is_active)
+        # # ================================>
 
         user_list.append({
             "id": user.id,
@@ -356,81 +415,53 @@ def librarian_details_page(request):
         })
     return render(request, "librarians_details/librarians_details.html", {"users" : user_list})
 
+
+
 @csrf_exempt
-def librarian_update_request(request):
-    if request.method == "PUT":
+def librarian_update_request(request, user_id):
+    if request.method != "PUT":
+        return JsonResponse({"status": "error","message": "Invalid Request"},status=405)
+
+    try:
+        # data = json.loads(request.body)
+        # librarian_id = request.session.get("user_id")
+        # librarian = Librarian.objects.filter(id=librarian_id).first()
+
         data = json.loads(request.body)
-        print("DATA : ", data)
-        username = data.get("username")
-        password = data.get("password")
+        librarian = Librarian.objects.filter(id=user_id).first()
+
+
+        if librarian is None:
+            return JsonResponse({"status": "error","message": "Librarian not found."},status=404)
+
         name = data.get("name").title()
         surname = data.get("surname").title()
         email = data.get("email")
         phone = data.get("phone")
         address = data.get("address").title()
+        # user = User.objects.filter(username=username).first()
 
-        librarian = Librarian.objects.filter(username=username).first()
-        user_1 = User.objects.filter(username=username).first()
+        if (
+            librarian.name == name and
+            librarian.surname == surname and
+            librarian.email == email and
+            librarian.phone_number == phone and
+            librarian.address == address
+        ):
+            return JsonResponse({"status": "error", "message": "No Change Found"},status=400)
 
-        if librarian:
-            if (
-                librarian.password == password and
-                librarian.name == name and
-                librarian.surname == surname and
-                librarian.email == email and
-                librarian.phone_number == phone and
-                librarian.address == address
-            ):
-                return JsonResponse({
-                    "status": "error",
-                    "error": "No Change Found "
-                }, status=405)  
-            else:
-                if librarian.password != password:
-                    if user_1:
-                        user_1.is_active = False
-                        user_1.save()
-                        librarian.password = password
-                        librarian.name = name
-                        librarian.surname = surname
-                        librarian.email = email
-                        librarian.phone_number = phone
-                        librarian.address = address
-                        librarian.is_active = False
-                        librarian.save()
-                else:
-                    librarian.name = name
-                    librarian.surname = surname
-                    librarian.email = email
-                    librarian.phone_number = phone
-                    librarian.address = address
-                    librarian.save()
-        else:
-            if (librarian.password == password and  librarian.name == name and librarian.surname == surname and librarian.email == email and librarian.phone_number == phone and librarian.address == address):
-                return JsonResponse({
-                    "status": "error",
-                    "error": "No Change Found"
-                }, status=405)  
-            Librarian.objects.create(
-                username=username,
-                password=password,
-                name=name,
-                surname=surname,
-                email=email,
-                phone_number=phone,
-                address=address
-            )
+        librarian.name = name
+        librarian.surname = surname
+        librarian.email = email
+        librarian.phone_number = phone
+        librarian.address = address
+        librarian.update_requested_at = timezone.now()
+        librarian.save()
 
-        return JsonResponse({
-            "status": "success",
-            "message": "Data received successfully",
-            "received_data": data
-        })
-    return JsonResponse({
-        "status": "error",
-        "message": "Something Went Wrong"
-    }, status=405)
+        return JsonResponse({"status": "success","message": "Profile updated successfully. Your account will remain active today. From tomorrow, administrator approval will be required."})
 
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 @csrf_exempt
 def librarian_delete_request(request):

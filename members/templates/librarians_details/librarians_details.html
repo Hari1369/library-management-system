@@ -19,7 +19,7 @@
       <tr>
         <th class="text-center">Sr No.</th>
         <th class="text-center">Username</th>
-        <th class="text-center">password</th>
+        <th hidden class="text-center">password</th>
         <th class="text-center">name</th>
         <th class="text-center">Surname</th>
         <th class="text-center">Email</th>
@@ -36,7 +36,7 @@
       <tr>
         <td class="text-center">{{ forloop.counter }}</td>
         <td class="text-center">{{ user.username }}</td>
-        <td class="text-center">{{ user.password }}</td>
+        <td hidden class="text-center">{{ user.password }}</td>
         <td class="text-center">{{ user.name }}</td>
         <td class="text-center">{{ user.surname }}</td>
         <td class="text-center">{{ user.email }}</td>
@@ -53,8 +53,8 @@
         <td class="text-center">
           <button class="btn btn-primary btn-sm"
             onclick="submit_data(
+              '{{ user.id }}',
               '{{ user.username }}',
-              '{{ user.password }}',
               '{{ user.name }}',
               '{{ user.surname }}',
               '{{ user.email|escapejs }}',
@@ -68,6 +68,7 @@
         <td class="text-center">
           <button class="btn btn-danger btn-sm" 
           onclick="del_data(
+            '{{ user.id }}',
             '{{ user.username }}',
             '{{ user.name }}',
             '{{ user.email|escapejs }}',
@@ -95,12 +96,12 @@
 
       <div class="modal-body">
 
+        <input type="hidden" id="user_id">
         <input type="hidden" id="user_username">
-
-        <div class="mb-2">
+        <!-- <div class="mb-2">
           <label>Password</label>
           <input type="text" id="user_password" class="form-control">
-        </div>
+        </div> -->
 
         <div class="mb-2">
           <label>Name</label>
@@ -141,20 +142,22 @@
 
 <!-- Pagination -->
 <script>
-window.submit_data = function(username, password, name, surname, email, phone_number, address, is_active) {
-    // ========================================> 
-    console.log("USERNAME         : ", username);
-    console.log("PASSWORD         : ", password);
-    console.log("NAME             : ", name);
-    console.log("SURNAME          : ", surname);
-    console.log("EMAIL            : ", email);
-    console.log("PHONE NUMBER     : ", phone_number);
-    console.log("ADDRESS          : ", address);
-    console.log("ACTIVE           : ", is_active);
-    // ========================================> 
+window.submit_data = function(user_id, username, name, surname, email, phone_number, address, is_active) {
 
+    // // ========================================> 
+    // console.log("USER ID          : ", user_id);
+    // console.log("USERNAME         : ", username);
+    // console.log("NAME             : ", name);
+    // console.log("SURNAME          : ", surname);
+    // console.log("EMAIL            : ", email);
+    // console.log("PHONE NUMBER     : ", phone_number);
+    // console.log("ADDRESS          : ", address);
+    // console.log("ACTIVE           : ", is_active);
+    // // ========================================> 
+
+    // ========================================> 
+    document.getElementById("user_id").value = user_id;
     document.getElementById("user_username").value = username;
-    document.getElementById("user_password").value = password;
     document.getElementById("user_name").value = name;
     document.getElementById("user_surname").value = surname;
     document.getElementById("user_email").value = email;
@@ -168,27 +171,28 @@ window.submit_data = function(username, password, name, surname, email, phone_nu
 
 
 window.save_user = async function() {
+
+    var user_id = document.getElementById("user_id").value;
     var username = document.getElementById("user_username").value;
-    var password = document.getElementById("user_password").value;
     var name = document.getElementById("user_name").value;
     var surname = document.getElementById("user_surname").value;
     var email = document.getElementById("user_email").value;
     var phone = document.getElementById("user_phone").value;
     var address = document.getElementById("user_address").value;
 
-    // ========================================> 
-    console.log("USERNAME         : ", username);
-    console.log("PASSWORD         : ", password);
-    console.log("NAME             : ", name);
-    console.log("SURNAME          : ", surname);
-    console.log("EMAIL            : ", email);
-    console.log("PHONE NUMBER     : ", phone);
-    console.log("ADDRESS          : ", address);
-    // ========================================> 
+    // // ========================================> 
+    // console.log("USERNAME         : ", username);
+    // console.log("USER ID          : ", user_id);
+    // console.log("NAME             : ", name);
+    // console.log("SURNAME          : ", surname);
+    // console.log("EMAIL            : ", email);
+    // console.log("PHONE NUMBER     : ", phone);
+    // console.log("ADDRESS          : ", address);
+    // // ========================================> 
 
     const formData = {
+      user_id,
       username,
-      password,
       name,
       surname,
       email,
@@ -196,8 +200,9 @@ window.save_user = async function() {
       address
     };
     
+    console.log("DATA : ", formData);
     try {
-      const response = await fetch("/update_librarian/", {
+      const response = await fetch(`/librarians/${user_id}/update/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -211,10 +216,10 @@ window.save_user = async function() {
         const modalEl = document.getElementById('editlibrarianModal');
         const modal = bootstrap.Modal.getInstance(modalEl);
         modal.hide();
-        location.reload();
+        // location.reload();
       } else {
-        alert(data.error);
-        location.reload();
+          alert(data.message);
+          // location.reload();
       }
     } catch (error) {
       console.error("Error:", error);
