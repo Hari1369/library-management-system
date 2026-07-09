@@ -828,6 +828,7 @@ def book_details_page(request):
     book_details_list = []
 
     for book in book_details:
+        book_id = book.id
         isbn = book.isbn
         title = book.title.title()
         author = book.author.title()
@@ -836,17 +837,18 @@ def book_details_page(request):
         available_copies = book.available_copies
         category_id = book.category.choice
 
-        # ================================>
-        print("ISBN             : ", isbn)
-        print("TITLE            : ", title)
-        print("AUTHOR           : ", author)
-        print("PUBLICATION YEAR : ", publication_year)
-        print("TOTAL COPIES     : ", total_copies)
-        print("AVAILABLE COPIES : ", available_copies)
-        print("CATEGORY         :", category_id)
-        # ================================>
+        # # ================================>
+        # print("ISBN             : ", isbn)
+        # print("TITLE            : ", title)
+        # print("AUTHOR           : ", author)
+        # print("PUBLICATION YEAR : ", publication_year)
+        # print("TOTAL COPIES     : ", total_copies)
+        # print("AVAILABLE COPIES : ", available_copies)
+        # print("CATEGORY         :", category_id)
+        # # ================================>
 
         book_details_list.append({
+            "book_id": book_id,
             "isbn": book.isbn,
             "title": book.title,
             "author": book.author,
@@ -858,7 +860,7 @@ def book_details_page(request):
     return render(request, "book_details/book_details.html", {"book_details" : book_details_list, "categories": categories})
 
 @csrf_exempt
-def book_update_request(request):
+def book_update_request(request, book_id):
     print("HELLOW")
     if request.method == "PUT":
         data = json.loads(request.body)
@@ -885,7 +887,7 @@ def book_update_request(request):
         # ================================>
 
         try:
-            book = BookDetails.objects.get(isbn=isbn)
+            book = BookDetails.objects.filter(id=book_id).first()
             if (title == book.title and author == book.author and str(publication_year) == str(book.publication_year) and add_copies == 0 and (category is None or int(category) == (book.category.id if book.category else None))):
                 return JsonResponse({
                     "status": "error",
@@ -957,15 +959,16 @@ def book_update_request(request):
 
 
 @csrf_exempt
-def book_delete_request(request):
+def book_delete_request(request, book_id):
     if request.method == "DELETE":
         data = json.loads(request.body)
         isbn = data.get("isbn")
         # ================================>
         print("ISBN     : ",isbn)
+        print("BOOK ID  : ",book_id)
         # ================================>
         try:
-            book = BookDetails.objects.get(isbn=isbn)
+            book = BookDetails.objects.get(id=book_id)
             if book.is_active:
                 book.is_active = False
                 book.save()

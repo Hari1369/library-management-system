@@ -24,8 +24,8 @@ urlpatterns = [
     path("book_registration/", book_registration_page, name="book_registration"),
     path("book_category_registration/", book_category_registration_page, name="book_category_registration"),
     path("book_details/", book_details_page, name="book_details"),
-    path("update_book/", book_update_request, name="update_book"),
-    path("book_delete/", book_delete_request, name="book_delete"),
+    path("update_book/<int:book_id>/", book_update_request, name="update_book"),
+    path("book_delete/<int:book_id>/", book_delete_request, name="book_delete"),
 
 
     

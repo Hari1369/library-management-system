@@ -16,6 +16,7 @@
     <thead>
       <tr>
         <th class="text-center">Sr No.</th>
+        <th hidden class="text-center">book id</th>
         <th class="text-center">Title</th>
         <th class="text-center">Author</th>
         <th class="text-center">Category</th>
@@ -30,6 +31,7 @@
     {% for book in book_details %}
     <tr>
       <td class="text-center">{{ forloop.counter }}</td>
+      <td hidden class="text-center">{{ book.book_id }}</td>
       <td class="text-center">{{ book.title }}</td>
       <td class="text-center">{{ book.author }}</td>
       <td class="text-center">{{ book.category }}</td>
@@ -39,6 +41,7 @@
       <td class="text-center">
         <button class="btn btn-primary btn-sm 
         "onclick="submit_data(
+            '{{ book.book_id }}',
             '{{ book.isbn }}',
             '{{ book.title }}',
             '{{ book.author|escapejs }}',
@@ -53,6 +56,7 @@
       <td class="text-center">
         <button class="btn btn-danger btn-sm
         "onclick="del_data(
+            '{{ book.book_id }}',
             '{{ book.isbn }}',
           )
         ">
@@ -80,6 +84,7 @@
 
       <div class="modal-body">
 
+        <input type="hidden" id="book_id">
         <input type="hidden" id="isbn">
 
         <div class="mb-3">
@@ -138,8 +143,9 @@
 
 <!-- Pagination -->
 <script>
-window.submit_data = function(isbn, title, author, category, year, total, available) {
+window.submit_data = function(book_id, isbn, title, author, category, year, total, available) {
   // ========================================> 
+  console.log("BOOK ID            : ", book_id);
   console.log("ISBN               : ", isbn);
   console.log("TITLE              : ", title);
   console.log("AUTHOR             : ", author);
@@ -158,6 +164,7 @@ window.submit_data = function(isbn, title, author, category, year, total, availa
       }
   }
 
+  document.getElementById("book_id").value = book_id;
   document.getElementById("isbn").value = isbn;
   document.getElementById("book_title").value = title;
   document.getElementById("book_author").value = author;
@@ -172,6 +179,7 @@ window.submit_data = function(isbn, title, author, category, year, total, availa
 
 
 window.save_book = async function() {
+  var book_id = document.getElementById("book_id").value;
   var isbn = document.getElementById("isbn").value;
   var title = document.getElementById("book_title").value;
   var author = document.getElementById("book_author").value;
@@ -207,6 +215,7 @@ window.save_book = async function() {
   else {
 
     // ========================================> 
+    console.log("BOOK ID            : ", book_id);
     console.log("ISBN               : ", isbn);
     console.log("TITLE              : ", title);
     console.log("AUTHOR             : ", author);
@@ -218,6 +227,7 @@ window.save_book = async function() {
     // ========================================> 
 
     const formData = {
+      book_id,
       isbn,
       title,
       author,
@@ -228,8 +238,10 @@ window.save_book = async function() {
       available_copies
     }
 
+    console.log("Book Details    : ", formData);
+
     try {
-      const response = await fetch("/update_book/", {
+      const response = await fetch(`/update_book/${book_id}/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -255,17 +267,23 @@ window.save_book = async function() {
 }
 
 
-window.del_data = async function(isbn) {
-    console.log("ISBN : ", isbn);
+window.del_data = async function(book_id, isbn) {
+
+    // ========================================> 
+    console.log("BOOK ID            : ", book_id);
+    console.log("ISBN               : ", isbn);
+    // ========================================> 
+
     try {
-        const response = await fetch("/book_delete/", {
+        const response = await fetch(`/book_delete/${book_id}/`, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": csrftoken
             },
             body: JSON.stringify({
-                isbn: isbn
+                isbn: isbn,
+                book_id: book_id
             })
         });
         const data = await response.json();
