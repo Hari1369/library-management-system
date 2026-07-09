@@ -12,10 +12,7 @@ urlpatterns = [
     path("dashboard_total_inactivemember/", dashboard_total_inactivemember, name="dashboard_total_inactivemember"),
 
 
-    # path("librarian_registration/", librarian_registration_page, name="librarian_registration"),
-    # path("librarian_details/", librarian_details_page, name="librarian_details"),
-    # path("librarians/<int:id>/", librarian_update_request, name="update_librarian"),
-    # path("librarians/<int:id>/", librarian_delete_request, name="delete_librarian"),
+
     path("librarian_registration/", librarian_registration_page, name="librarian_registration"),
     path("librarian_details/", librarian_details_page, name="librarian_details"),
     path("librarians_update/<int:user_id>/", librarian_update_request, name="update_librarian"),
