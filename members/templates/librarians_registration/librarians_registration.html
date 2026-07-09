@@ -9,15 +9,17 @@
     <a href="{% url 'dashboard_page' %}" class="btn btn-lms-outline btn-sm">← Back to Dashboard</a>
   </div>
 
-  {% if success %}
-      alert("{{ success|escapejs }}");
-  {% endif %}
+{% if success %}
+  <script>
+    alert("{{ success|escapejs }}");
+  </script>
+{% endif %}
 
-  {% if error %}
-    <script>
-      alert("{{ error|escapejs }}");
-    </script>
-  {% endif %}
+{% if error %}
+  <script>
+    alert("{{ error|escapejs }}");
+  </script>
+{% endif %}
 
 <div class="d-flex justify-content-center">
   <div class="lms-card w-100">

@@ -355,7 +355,7 @@ def librarian_registration_page(request):
                     )                        
                     Librarian.objects.create(
                         username=username,
-                        password=password,
+                        password=make_password(password),
                         name=name,
                         surname=surname,
                         email=email,
@@ -411,7 +411,7 @@ def librarian_details_page(request):
             "phone_number": user.phone_number,
             "address": user.address,
             "is_active": user.is_active,
-            "created_at": user.created_at,
+            "created_at": user.created_at.strftime("%d-%m-%Y %H:%M:%S"),
         })
     return render(request, "librarians_details/librarians_details.html", {"users" : user_list})
 
@@ -464,7 +464,7 @@ def librarian_update_request(request, user_id):
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 @csrf_exempt
-def librarian_delete_request(request):
+def librarian_delete_request(request, user_id):
     if request.method == "DELETE":
         data = json.loads(request.body)
         username = data.get("username")
@@ -473,6 +473,7 @@ def librarian_delete_request(request):
         is_active = str(data.get("is_active")).lower() == "true"
 
         # ================================>
+        print("USER ID      : ", user_id)
         print("USERNAME     : ", username)
         print("NAME         : ", name)
         print("EMAIL        : ", email)
@@ -484,9 +485,12 @@ def librarian_delete_request(request):
                 "status": "error",
                 "message": "Active Librarian cannot be deleted"
             }, status=400)
-            
+        
+        librarian = Librarian.objects.filter(id=user_id).first()
+        if librarian is None:
+            return JsonResponse({"status": "error", "message": "Librarian not found."}, status=404) 
+                
         try:
-            librarian = Librarian.objects.get(username=username)
             if librarian.is_active:
                 return JsonResponse({
                     "status": "error",
@@ -591,8 +595,8 @@ def member_details_page(request):
 
         # ================================>
         print("ID               : ", id)
-        print("FIRST NAME             : ", first_name)
-        print("LAST NAME             : ", last_name)
+        print("FIRST NAME       : ", first_name)
+        print("LAST NAME        : ", last_name)
         print("EMAIL            : ", email)
         print("PHONE NUMBER     : ", phone_number)
         print("ADDRESS          : ", address)
@@ -612,7 +616,7 @@ def member_details_page(request):
             "membership_date": membership_date,
             "is_active" : is_active,
             "is_expired" : is_expired,
-            "created_at" : created_at,
+            "created_at" : created_at.strftime("%d-%m-%Y %H:%M:%S"),
         })
     return render(request, "member_details/member_details.html", {"members": member_list})
 

@@ -18,8 +18,8 @@ urlpatterns = [
     # path("librarians/<int:id>/", librarian_delete_request, name="delete_librarian"),
     path("librarian_registration/", librarian_registration_page, name="librarian_registration"),
     path("librarian_details/", librarian_details_page, name="librarian_details"),
-    path("librarians/<int:user_id>/update/", librarian_update_request, name="update_librarian"),
-    path("librarians/<int:id>/delete/", librarian_delete_request, name="delete_librarian"),
+    path("librarians_update/<int:user_id>/", librarian_update_request, name="update_librarian"),
+    path("librarians_delete/<int:user_id>/", librarian_delete_request, name="delete_librarian"),
 
     path("book_registration/", book_registration_page, name="book_registration"),
     path("book_category_registration/", book_category_registration_page, name="book_category_registration"),

@@ -10,7 +10,7 @@ class Librarian(models.Model):
     name = models.CharField(max_length=255)
     surname = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=15)
+    phone_number = models.CharField(max_length=15, unique=True)
     address = models.TextField()
     is_active = models.BooleanField(default=True)
     is_shown = models.BooleanField(default=True)

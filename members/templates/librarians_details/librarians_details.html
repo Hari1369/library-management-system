@@ -202,7 +202,7 @@ window.save_user = async function() {
     
     console.log("DATA : ", formData);
     try {
-      const response = await fetch(`/librarians/${user_id}/update/`, {
+      const response = await fetch(`/librarians_update/${user_id}/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -216,25 +216,39 @@ window.save_user = async function() {
         const modalEl = document.getElementById('editlibrarianModal');
         const modal = bootstrap.Modal.getInstance(modalEl);
         modal.hide();
-        // location.reload();
+        location.reload();
       } else {
-          alert(data.message);
-          // location.reload();
+        alert(data.message);
+        location.reload();
       }
     } catch (error) {
       console.error("Error:", error);
     }
 }
-window.del_data = async function(username) {
+
+
+window.del_data = async function(user_id, username, name, email, is_active) {
+    // ========================================> 
+    console.log("USERNAME     : ", username);
+    console.log("USER ID      : ", user_id);
+    console.log("USER NAME    : ", name);
+    console.log("USER EMAIL   : ", email);
+    console.log("USER ACTIVE  : ", is_active);
+    // ========================================> 
+
     try {
-        const response = await fetch("/librarian_delete/", {
+        const response = await fetch(`/librarians_delete/${user_id}/`, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": csrftoken
             },
             body: JSON.stringify({
-                username: username
+                username: username,
+                user_id : user_id,
+                name : name,
+                email : email,
+                is_active : is_active
             })
         });
         const data = await response.json();
