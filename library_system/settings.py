@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_crontab',
+    # 'django_crontab',
     "rest_framework",
     'django_celery_beat',
     'members'
@@ -92,24 +92,52 @@ DATABASES = {
     }
 }
 
-CRONJOBS = [
-    ('0 0 * * *', 'members.cron_management.fine_maintenance.run', '>> /tmp/fine_maintenance.log 2>&1'),
-]
+# CRONJOBS = [
+#     ('0 0 * * *', 'members.cron_management.fine_maintenance.run', '>> /tmp/fine_maintenance.log 2>&1'),
+# ]
 
-# ── Celery Configuration ──────────────────────────────
-# CELERY_BROKER_URL = 'redis://localhost:6379/0'
-# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-CELERY_BROKER_URL = os.environ.get(
-    'CELERY_BROKER_URL',
-    f"redis://{os.environ.get('REDIS_HOST', 'localhost')}:{os.environ.get('REDIS_PORT', '6379')}/0"
+# # ── Celery Configuration ──────────────────────────────
+# # CELERY_BROKER_URL = 'redis://localhost:6379/0'
+# # CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+# CELERY_BROKER_URL = os.environ.get(
+#     'CELERY_BROKER_URL',
+#     f"redis://{os.environ.get('REDIS_HOST', 'localhost')}:{os.environ.get('REDIS_PORT', '6379')}/0"
+# )
+# CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', CELERY_BROKER_URL)
+# CELERY_BEAT_SCHEDULE = {
+#     "run-fine-maintenance": {
+#         "task": "members.tasks.run_fine_maintenance",
+#         "schedule": 3.0,
+#     },
+# }
+
+
+
+CELERY_BROKER_URL = os.getenv(
+    "CELERY_BROKER_URL",
+    "redis://redis:6379/0"
 )
 
-
-CELERY_BROKER_URL = os.environ.get(
-    'CELERY_BROKER_URL',
-    f"redis://{os.environ.get('REDIS_HOST', 'localhost')}:{os.environ.get('REDIS_PORT', '6379')}/0"
+CELERY_RESULT_BACKEND = os.getenv(
+    "CELERY_RESULT_BACKEND",
+    CELERY_BROKER_URL
 )
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', CELERY_BROKER_URL)
+
+CELERY_ACCEPT_CONTENT = ["json"]
+
+CELERY_TASK_SERIALIZER = "json"
+
+CELERY_RESULT_SERIALIZER = "json"
+
+CELERY_TIMEZONE = "Asia/Kolkata"
+
+CELERY_BEAT_SCHEDULE = {
+    "fine-maintenance-every-3-seconds": {
+        "task": "members.tasks.run_fine_maintenance",
+        "schedule": 3.0,
+    },
+}
+
 
 
 # Password validation
