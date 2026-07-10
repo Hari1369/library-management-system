@@ -132,9 +132,9 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Asia/Kolkata"
 
 CELERY_BEAT_SCHEDULE = {
-    "fine-maintenance-every-3-seconds": {
+    "fine-maintenance-every-midnight": {
         "task": "members.tasks.run_fine_maintenance",
-        "schedule": 3.0,
+        "schedule": crontab(hour=0, minute=0),
     },
 }
 
