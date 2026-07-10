@@ -1,15 +1,82 @@
+# services:
+#   db:
+#     image: postgres:15
+#     restart: always
+#     environment:
+#       POSTGRES_DB: library_db
+#       POSTGRES_USER: quantumd
+#       POSTGRES_PASSWORD: admlqq
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#     ports:
+#       - "5433:5432"
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U quantumd -d library_db"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 5
+#   redis:
+#     image: redis:7-alpine
+#     restart: always
+#     ports:
+#       - "6379:6379"
+
+
+#   web:
+#     build: .
+#     command: python manage.py runserver 0.0.0.0:8000
+#     volumes:
+#       - .:/app
+#     ports:
+#       - "8000:8000"
+#     depends_on:
+#       - db
+#       - redis
+#     environment:
+#       DB_NAME: library_db
+#       DB_USER: quantumd
+#       DB_PASSWORD: admlqq
+#       DB_HOST: db
+#       DB_PORT: 5432
+
+#   celery:
+#     build: .
+#     command: celery -A library_system worker -l info
+#     volumes:
+#       - .:/app
+#     env_file: .env
+#     depends_on:
+#       - db
+#       - redis
+
+# volumes:
+#   postgres_data:
+
+
 services:
   db:
     image: postgres:15
     restart: always
+    env_file: .env
     environment:
-      POSTGRES_DB: library_db
-      POSTGRES_USER: library_user
-      POSTGRES_PASSWORD: library_pass
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
 
   web:
     build: .
@@ -18,14 +85,24 @@ services:
       - .:/app
     ports:
       - "8000:8000"
+    env_file: .env
     depends_on:
-      - db
-    environment:
-      DB_NAME: library_db
-      DB_USER: library_user
-      DB_PASSWORD: library_pass
-      DB_HOST: db
-      DB_PORT: 5432
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  celery:
+    build: .
+    command: celery -A library_system worker -l info
+    volumes:
+      - .:/app
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
 volumes:
   postgres_data:
