@@ -3,7 +3,7 @@ import psycopg2
 import psycopg2.extras
 
 conn = psycopg2.connect(
-    dbname="library_test",
+    dbname="library_db",
     user="quantumd",
     password="admlqq",
     host="localhost",
