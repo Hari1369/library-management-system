@@ -28,8 +28,8 @@ urlpatterns = [
     
     path("member_details/", member_details_page, name="member_details"),
     path("member_registration/", member_registration_page, name="member_registration"),
-    path("update_member/", member_update_request, name="update_member"),
-    path("member_delete/", member_delete_request, name="member_delete"),
+    path("update_member/<int:id>/", member_update_request, name="update_member"),
+    path("member_delete/<int:member_id>/", member_delete_request, name="member_delete"),
 
 
 

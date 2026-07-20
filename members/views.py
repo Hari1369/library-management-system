@@ -621,32 +621,36 @@ def member_details_page(request):
     return render(request, "member_details/member_details.html", {"members": member_list})
 
 @csrf_exempt
-def member_update_request(request):
+def member_update_request(request, id):
     if request.method == "PUT":
         data = json.loads(request.body)
-        member_id = data.get("id")
         first_name = data.get("first_name").title()
         last_name = data.get("last_name").title()
         email = data.get("email")
         phone = data.get("phone")
         address = data.get("address")
         membership_date = data.get("membership_date")
-        if membership_date:
-            membership_date = datetime.strptime(membership_date, "%Y-%m-%d").date()
 
-        if not member_id:
+        if membership_date:
+            membership_date = datetime.strptime(membership_date,"%Y-%m-%d").date()
+
+        if not id:
             return JsonResponse({
                 "status": "error",
                 "message": "Member ID is required"
             }, status=400)   
 
 
-        if membership_date < date.today():
-            return render(request, "member_registration/member_registration.html", {"form": form, "error": "Membership date cannot be in the past."})  
+        if membership_date and membership_date < date.today():
+            return JsonResponse({
+                "status": "error",
+                "message": "Membership date cannot be in the past."
+            }, status=400)
+
         # ================================>
-        print("ID                   :", member_id)
-        print("FIRST NAME                 :", first_name)
-        print("LAST NAME                 :", last_name)
+        print("ID                   :", id)
+        print("FIRST NAME           :", first_name)
+        print("LAST NAME            :", last_name)
         print("EMAIL                :", email)
         print("PHONE                :", phone)
         print("ADDRESSS             :", address)
@@ -654,7 +658,7 @@ def member_update_request(request):
         # ================================>
 
         try:
-            member = Member.objects.get(id=member_id)
+            member = Member.objects.get(id=id)
             if (member.first_name == first_name and member.last_name == last_name and member.email == email and member.phone_number == phone and member.address == address and member.membership_date == membership_date):
                 return JsonResponse({"status": "error","message": "No changes detected. Data already up to date."})
 
@@ -687,29 +691,28 @@ def member_update_request(request):
 
 
 @csrf_exempt
-def member_delete_request(request):
+def member_delete_request(request, member_id):
     if request.method == "DELETE":
         data = json.loads(request.body)
-        member_id = data.get("id")
         name = data.get("name").title()
         is_active = data.get("is_active")
         is_active = True if str(is_active).lower() == "true" else False
 
         # ================================>
-        print("ID                   :", member_id)
+        print("ID                   :", id)
         print("NAME                 :", name)
         print("ACTIVE               :", is_active)
         # ================================>
 
         if is_active is True:
             try:
-                member = Member.objects.get(id=member_id)
+                member = Member.objects.get(id=id)
                 member.is_active = False
                 member.save()
                 return JsonResponse({
                     "status": "success",
                     "message": "Member deactivated successfully",
-                    "id": member_id,
+                    "id": id,
                     "is_active": member.is_active
                 })
             except Member.DoesNotExist:
@@ -1005,6 +1008,7 @@ def book_delete_request(request, book_id):
 @login_required
 @role_required(["super_admin", "librarian"])
 def borrow_records(request):
+    print("BORROW RECORDS")
     issuemaintenance = IssueMaintanence.objects.all().order_by('-created_at')
 
     member_id = request.GET.get('member')
@@ -1018,8 +1022,8 @@ def borrow_records(request):
     if status and status != "":
         issuemaintenance = issuemaintenance.filter(status=status)
 
-    members = Member.objects.all()
-    books = BookDetails.objects.all()
+    members = Member.objects.filter(is_active=True)
+    books = BookDetails.objects.filter(is_active=True)
 
     return render(request, "records/records.html", {"issuemaintenance": issuemaintenance, "members": members, "books": books,})
 

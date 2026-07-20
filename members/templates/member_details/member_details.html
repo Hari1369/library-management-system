@@ -228,8 +228,8 @@ window.save_member = async function() {
 
   // ========================================> 
   console.log("ID               : ", id);
-  console.log("FIRST NAME             : ", first_name);
-  console.log("LAST NAME             : ", last_name);
+  console.log("FIRST NAME       : ", first_name);
+  console.log("LAST Name        : ", last_name);
   console.log("EMAIL            : ", email);
   console.log("PHONE            : ", phone);
   console.log("ADDRESS          : ", address);
@@ -247,7 +247,7 @@ window.save_member = async function() {
   };
 
   try {
-    const response = await fetch("/update_member/", {
+    const response = await fetch(`/update_member/${id}/`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -271,21 +271,24 @@ window.save_member = async function() {
 }
 
 
-window.del_data = async function(id, name, email, is_active) {
-  console.log("ID         :", id)
+window.del_data = async function(member_id, name, email, is_active) {
+  // ========================================> 
+  console.log("ID         :", member_id)
   console.log("NAME       :", name)
   console.log("EMAIL      :", email)
   console.log("IS_ACTIVE  :", is_active);
+  // ========================================> 
 
   const formData = {
-    id,
+    member_id,
     name,
     email,
     is_active
   };
+  
 
   try {
-    const response = await fetch("/member_delete/", {
+    const response = await fetch(`/member_delete/${member_id}/`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

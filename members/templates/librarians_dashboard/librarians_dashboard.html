@@ -216,99 +216,61 @@ async function loadDashboardTableData_1() {
     });
 
     const data = await response.json();
-    console.log("DATA:", data);
+    console.log("DATA 1 :", data);
 
     const tbody = document.querySelector(".recent-issues-body");
     tbody.innerHTML = "";
-
-    for (let i = 0; i < data.book_data_list.length; i++) {
-      const item = data.book_data_list[i];
-
-      var book_title = item.book_title || "";
-      var librarian_name = item.librarian_name || "";
-      var member_name = item.member_name || "";
-      var issue_date = item.issue_date || "";
-      var total_issue = item.total_issued || 0;
-      var status = item.member_is_active || ""
-      var registered_at = item.registered_at || "";
-
-      let statusText = "";
-      let color = "";
-
-      if (status === true) {
-        statusText = "Active";
-        color = "green";
-      } else {
-        statusText = "Inactive";
-        color = "red";
-      }
-
-      const row = `
-        <tr>
-          <td class="text-center" >${book_title}</td>
-          <td class="text-center" >${member_name}</td>
-          <td class="text-center" >${librarian_name}</td>
-          <td class="text-center" >${issue_date}</td>
-          <td class="text-center" >${registered_at}</td>
-          <td class="text-center" >${total_issue}</td>
-          <td class="text-center" style="color:${color}; font-weight:bold;">
-            ${statusText}
-          </td>
-
-        </tr>
-      `;
-
-      tbody.innerHTML += row;
-    }
-  } catch (err) {
-    console.error("Dashboard fetch failed:", err);
-  }
-}
-
-
-
-async function loadDashboardTableData_1() {
-  try {
-    const response = await fetch("/dashboard_book_data/");
-    const data = await response.json();
-
-    const tbody = document.querySelector(".recent-issues-body");
-    tbody.innerHTML = "";
-
-    const list = data.book_data_list;
-
-    if (!list || list.length === 0) {
+    if (!data.book_data_list || data.book_data_list.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="7" class="text-center no-data-cell">
-            No Records Found
+          <td colspan="7" class="text-center">
+            No Data Retrieved
           </td>
         </tr>
       `;
-      return;
-    }
+    } else {
+        for (let i = 0; i < data.book_data_list.length; i++) {
+          const item = data.book_data_list[i];
 
-    list.forEach(item => {
-      let statusText = item.member_is_active ? "Active" : "Inactive";
-      let color = item.member_is_active ? "green" : "red";
+          var book_title = item.book_title || "";
+          var librarian_name = item.librarian_name || "";
+          var member_name = item.member_name || "";
+          var issue_date = item.issue_date || "";
+          var total_issue = item.total_issued || 0;
+          var status = item.member_is_active || ""
+          var registered_at = item.registered_at || "";
 
-      tbody.innerHTML += `
-        <tr>
-          <td>${item.book_title || ""}</td>
-          <td>${item.member_name || ""}</td>
-          <td>${item.librarian_name || ""}</td>
-          <td>${item.issue_date || ""}</td>
-          <td>${item.registered_at || ""}</td>
-          <td>${item.total_issued || 0}</td>
-          <td style="color:${color}; font-weight:bold;">
-            ${statusText}
-          </td>
-        </tr>
-      `;
-    });
+          let statusText = "";
+          let color = "";
 
+          if (status === true) {
+            statusText = "Active";
+            color = "green";
+          } else {
+            statusText = "Inactive";
+            color = "red";
+          }
+
+          const row = `
+            <tr>
+              <td class="text-center" >${book_title}</td>
+              <td class="text-center" >${member_name}</td>
+              <td class="text-center" >${librarian_name}</td>
+              <td class="text-center" >${issue_date}</td>
+              <td class="text-center" >${registered_at}</td>
+              <td class="text-center" >${total_issue}</td>
+              <td class="text-center" style="color:${color}; font-weight:bold;">
+                ${statusText}
+              </td>
+
+            </tr>
+          `;
+
+          tbody.innerHTML += row;
+        }
+      }
   } catch (err) {
-    console.error(err);
+    console.error("Dashboard fetch failed:", err);
   }
 }
 
@@ -317,6 +279,7 @@ async function dashboard_total_activemember() {
   try {
     const response = await fetch("/dashboard_book_data/");
     const data = await response.json();
+    console.log("DATA 2: ", data);
   } catch (err) {
     console.error(err);
   }
@@ -326,28 +289,20 @@ async function dashboard_total_inactivemember() {
   try {
     const response = await fetch("/dashboard_book_data/");
     const data = await response.json();
+    console.log("DATA 3: ", data);
   } catch (err) {
     console.error(err);
   }
-
 }
 
 
-loadDashboardData();
-loadDashboardTableData_1();
-dashboard_lowest_books();
-dashboard_total_activemember();
-dashboard_total_inactivemember();
-
-
-
 setInterval(() => {
-  loadDashboardData();
   loadDashboardTableData_1();
-  dashboard_lowest_books();
   dashboard_total_activemember();
   dashboard_total_inactivemember();
-}, 20000);
+}, 3000);
+
+
 </script>
 
 {% endblock %}
